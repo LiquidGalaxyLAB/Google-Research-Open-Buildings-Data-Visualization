@@ -1,6 +1,6 @@
-# proofofconceptapp
+# Google Research: Open Buildings data visualization
 
-A new Flutter project.
+This project, being developed as part of Google Summer of Code 2025 under the Liquid Galaxy organization, aims to build a visualization tool for Google's Open Buildings dataset. The goal is to create an immersive 3D experience on the Liquid Galaxy rig — a multi-screen panoramic display system — that allows users to explore geospatial building data in an intuitive and interactive manner. The project will involve integrating geospatial APIs, managing data pipelines, and leveraging the Liquid Galaxy platform to orchestrate synchronized visual content. Once completed, the tool will help urban researchers, planners, and educators better understand and engage with large-scale spatial datasets.
 
 ## Getting Started
 
