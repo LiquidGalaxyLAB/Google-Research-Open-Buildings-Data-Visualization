@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>Building Box</name>
+
+  <Style id="boxStyle">
+    <LineStyle>
+      <color>ff00ff00</color> <!-- Opaque green outline -->
+      <width>2</width>
+    </LineStyle>
+    <PolyStyle>
+      <color>8800ff00</color> <!-- Semi-transparent green fill -->
+    </PolyStyle>
+  </Style>
+
+  <!-- Wall 1 -->
+  <Placemark><styleUrl>#boxStyle</styleUrl>
+    <Polygon><altitudeMode>absolute</altitudeMode>
+      <outerBoundaryIs><LinearRing>
+        <coordinates>
+          {{START_LNG}},{{START_LAT}},0
+          {{END_LNG}},{{START_LAT}},0
+          {{END_LNG}},{{START_LAT}},{{HEIGHT}}
+          {{START_LNG}},{{START_LAT}},{{HEIGHT}}
+          {{START_LNG}},{{START_LAT}},0
+        </coordinates>
+      </LinearRing></outerBoundaryIs>
+    </Polygon>
+  </Placemark>
+
+  <!-- Wall 2 -->
+  <Placemark><styleUrl>#boxStyle</styleUrl>
+    <Polygon><altitudeMode>absolute</altitudeMode>
+      <outerBoundaryIs><LinearRing>
+        <coordinates>
+          {{END_LNG}},{{START_LAT}},0
+          {{END_LNG}},{{END_LAT}},0
+          {{END_LNG}},{{END_LAT}},{{HEIGHT}}
+          {{END_LNG}},{{START_LAT}},{{HEIGHT}}
+          {{END_LNG}},{{START_LAT}},0
+        </coordinates>
+      </LinearRing></outerBoundaryIs>
+    </Polygon>
+  </Placemark>
+
+  <!-- Wall 3 -->
+  <Placemark><styleUrl>#boxStyle</styleUrl>
+    <Polygon><altitudeMode>absolute</altitudeMode>
+      <outerBoundaryIs><LinearRing>
+        <coordinates>
+          {{END_LNG}},{{END_LAT}},0
+          {{START_LNG}},{{END_LAT}},0
+          {{START_LNG}},{{END_LAT}},{{HEIGHT}}
+          {{END_LNG}},{{END_LAT}},{{HEIGHT}}
+          {{END_LNG}},{{END_LAT}},0
+        </coordinates>
+      </LinearRing></outerBoundaryIs>
+    </Polygon>
+  </Placemark>
+
+  <!-- Wall 4 -->
+  <Placemark><styleUrl>#boxStyle</styleUrl>
+    <Polygon><altitudeMode>absolute</altitudeMode>
+      <outerBoundaryIs><LinearRing>
+        <coordinates>
+          {{START_LNG}},{{END_LAT}},0
+          {{START_LNG}},{{START_LAT}},0
+          {{START_LNG}},{{START_LAT}},{{HEIGHT}}
+          {{START_LNG}},{{END_LAT}},{{HEIGHT}}
+          {{START_LNG}},{{END_LAT}},0
+        </coordinates>
+      </LinearRing></outerBoundaryIs>
+    </Polygon>
+  </Placemark>
+
+</Document>
+</kml>

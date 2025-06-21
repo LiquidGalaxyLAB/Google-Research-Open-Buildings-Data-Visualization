@@ -62,7 +62,7 @@ class ApiService {
           id: 'mock-building-$i',
           polygonPoints: points,
           confidenceScore: 0.7 + (i * 0.05),
-          plusCode: 'MOCK+CODE',
+          plusCode: 'MOCK+CODE', area: 12,
         ),
       );
     }

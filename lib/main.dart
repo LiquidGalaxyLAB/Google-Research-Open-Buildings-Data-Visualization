@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:proofofconceptapp/ui/onboarding_screen.dart';
 import 'ui/map_screen.dart';
 
 void main() {
@@ -19,7 +20,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MapScreen(),
+      home: OnboardingWrapper(child: MapScreen()), // Wrap your MapScreen
       debugShowCheckedModeBanner: false,
     );
   }
