@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_linkify/flutter_linkify.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -184,15 +186,30 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
           children: [
             _buildConnectionStatus(),
             const SizedBox(height: 16),
+
+            // QR Scan Button
             ElevatedButton.icon(
               icon: const Icon(Icons.qr_code_scanner),
-              label: const Text('Scan QR code'),
+              label: const Text('Scan QR Code'),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(50),
+                backgroundColor: Colors.blue[600],
+                foregroundColor: Colors.white,
               ),
-              onPressed: () => _scanQRCode(),
+              onPressed: _scanQRCode,
             ),
-            const SizedBox(height: 24),
+
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+
+            // Manual entry section
+            const Text(
+              'Or enter manually:',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 16),
+
             _buildTextField(label: 'IP Address', controller: _ipController, validator: _validateIP),
             _buildTextField(label: 'Port', controller: _portController, keyboardType: TextInputType.number,  validator: _validateNumber),
             _buildTextField(label: 'Rigs', controller: _rigsController, keyboardType: TextInputType.number, validator: _validateNumber),
@@ -208,29 +225,13 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
               ),
             ),
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      isConnected = false;
-                    });
-                    _savePreferences();
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Disconnected')));
-                  },
-                  child: const Text('Disconnect'),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      _connectToLiquidGalaxy();
-                    }
-                  },
-                  child: const Text('Connect'),
-                ),
-              ],
+            ElevatedButton.icon(
+              icon: const Icon(Icons.connect_without_contact),
+              label: const Text('Connect'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size.fromHeight(50),
+              ),
+              onPressed: _connectToLiquidGalaxy,
             ),
           ],
         ),
@@ -902,96 +903,470 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
   }
 }
 
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends StatefulWidget {
   const AboutScreen({Key? key}) : super(key: key);
+
+  @override
+  _AboutScreenState createState() => _AboutScreenState();
+}
+
+class _AboutScreenState extends State<AboutScreen> {
+  bool _isDarkMode = false;
+
+  _launchURL(Uri url) async {
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'About',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(50),
+        child: AppBar(
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              size: 30.0,
+              color: Colors.black,
+            ),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildInfoItem('Version', '1.0.0'),
-            _buildInfoItem('Developer', 'Jaivardhan Shukla'),
-            _buildInfoItem('Project', 'GSoC 2025 - Liquid Galaxy'),
-            _buildInfoItem('Data Source', 'Google Open Buildings\nDataset V3'),
-            const SizedBox(height: 24.0),
-            _buildViewProjectButton(),
-          ],
+      backgroundColor: _isDarkMode
+          ? const Color.fromARGB(255, 16, 16, 16)
+          : const Color.fromARGB(255, 245, 245, 245),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Header Section
+              Padding(
+                padding: const EdgeInsets.only(
+                    left: 20.0, right: 20.0, bottom: 5, top: 80),
+                child: Text(
+                  'About',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 36,
+                    color: _isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+              ),
+
+              // App Logo/Icon
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20.0),
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+
+                  ),
+                  child: Image.asset('assets/logos/app_logo.png')
+                ),
+              ),
+
+              // App Title
+              Text(
+                'Open Buildings Dataset Tool',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: _isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              // App Description
+              Text(
+                'Interactive visualization tool for Google\'s Open Buildings dataset\nwith Liquid Galaxy integration',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: _isDarkMode ? Colors.grey[300] : Colors.grey[600],
+                  height: 1.4,
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              // Version Info Card
+              _buildInfoCard(),
+
+              const SizedBox(height: 20),
+
+              // Developer Section
+              _buildDeveloperSection(),
+
+              const SizedBox(height: 20),
+
+              // Project Details Section
+              _buildProjectDetailsSection(),
+
+              const SizedBox(height: 20),
+
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16), // adjust the radius as you like
+                child: Image.asset(
+                  'assets/images/splash_kml.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+
+
+              const SizedBox(height: 30),
+
+              // Action Buttons
+              _buildActionButtons(),
+
+              const SizedBox(height: 40),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildInfoItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
+  Widget _buildInfoCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _isDarkMode ? Colors.grey[800] : Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
         children: [
-          SizedBox(
-            width: 100.0,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 16.0,
-                color: Colors.grey[600],
+          _buildInfoRow('Version', '1.0.0', Icons.info_outline),
+          const Divider(height: 20),
+          _buildInfoRow('Data Source', 'Google Open Buildings V3', Icons.dataset),
+          const Divider(height: 20),
+          _buildInfoRow('Project', 'GSoC 2025 - Liquid Galaxy', Icons.code),
+          const Divider(height: 20),
+          _buildInfoRow('Build Date', 'January 2025', Icons.calendar_today),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, IconData icon) {
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: _isDarkMode ? Colors.blue[300] : Colors.blue[600],
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                ),
               ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: _isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDeveloperSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _isDarkMode ? Colors.grey[800] : Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.person,
+                color: _isDarkMode ? Colors.blue[300] : Colors.blue[600],
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Developer',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          Text(
+            'Jaivardhan Shukla',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: _isDarkMode ? Colors.white : Colors.black,
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.w500,
-              ),
-              textAlign: TextAlign.right,
+          const SizedBox(height: 5),
+          Text(
+            'VNIT Nagpur, India',
+            style: TextStyle(
+              fontSize: 14,
+              color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
             ),
+          ),
+          const SizedBox(height: 15),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildSocialButton('GitHub', 'https://github.com/jaivsh', Icons.code),
+              _buildSocialButton('LinkedIn', 'https://www.linkedin.com/in/jaivardhan-shukla', Icons.work),
+              _buildSocialButton('Email', 'mailto:akojoel60@gmail.com', Icons.email),
+            ],
           ),
         ],
       ),
     );
   }
 
-
-  Widget _buildViewProjectButton() {
-    return ElevatedButton(
-      onPressed: () {},
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: Colors.blue,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8.0),
+  Widget _buildSocialButton(String label, String url, IconData icon) {
+    return GestureDetector(
+      onTap: () => _launchURL(Uri.parse(url)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.blue.withOpacity(0.3)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 12.0),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: Colors.blue[600],
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.blue[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
       ),
-      child: const Text('View project info'),
     );
   }
-}
 
-// Extension to add a bottom widget to a row (for slider layout)
-extension WidgetModifier on Row {
-  Widget modifyBottomWidget({required Widget bottomWidget}) {
+  Widget _buildProjectDetailsSection() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _isDarkMode ? Colors.grey[800] : Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: _isDarkMode ? Colors.blue[300] : Colors.blue[600],
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'About this Project',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: _isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          Text(
+            'This application integrates Google\'s Open Buildings dataset with interactive mapping capabilities and Liquid Galaxy visualization. Built as part of Google Summer of Code 2025 with the Liquid Galaxy organization.',
+            style: TextStyle(
+              fontSize: 14,
+              color: _isDarkMode ? Colors.grey[300] : Colors.grey[700],
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 15),
+          _buildFeatureList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureList() {
+    final features = [
+      'Interactive building footprint visualization',
+      'Real-time data from Google Earth Engine',
+      'Liquid Galaxy integration for immersive experience',
+      'Grid-based mapping with zoom controls',
+      'Building confidence score visualization',
+    ];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        this,
-        bottomWidget,
+        Text(
+          'Key Features:',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: _isDarkMode ? Colors.white : Colors.black,
+          ),
+        ),
+        const SizedBox(height: 10),
+        ...features.map((feature) => Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.check_circle,
+                size: 16,
+                color: Colors.green[600],
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  feature,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: _isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        )),
       ],
     );
+  }
+
+  Widget _buildActionButtons() {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: () => _launchURL(Uri.parse('https://github.com/jaivsh')),
+            icon: const Icon(Icons.open_in_new, size: 20),
+            label: const Text('View Project Repository'),
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: Colors.blue[600],
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _launchURL(Uri.parse('https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_Research_open-buildings_v3_polygons')),
+                icon: const Icon(Icons.dataset, size: 18),
+                label: const Text('Open Buildings Dataset'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.blue[600],
+                  side: BorderSide(color: Colors.blue[600]!),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () => _launchURL(Uri.parse('https://www.liquidgalaxy.eu/')),
+                icon: const Icon(Icons.public, size: 18),
+                label: const Text('Liquid Galaxy'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.blue[600],
+                  side: BorderSide(color: Colors.blue[600]!),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _onOpen(LinkableElement link) async {
+    if (await canLaunchUrl(Uri.parse(link.url))) {
+      await launchUrl(Uri.parse(link.url));
+    } else {
+      throw 'Could not launch $link';
+    }
   }
 }
