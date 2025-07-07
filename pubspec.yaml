@@ -49,8 +49,17 @@ dependencies:
   flutter_linkify: ^6.0.0
 
 dev_dependencies:
+  flutter_launcher_icons:
   flutter_test:
     sdk: flutter
+
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path_android: "assets/logos/logo.png"
+  adaptive_icon_background: "#ffffff"
+  image_path_ios: "assets/logos/logo.png"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
