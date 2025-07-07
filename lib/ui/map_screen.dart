@@ -360,7 +360,7 @@ class _MapScreenState extends State<MapScreen> {
 
     try {
       // Fetch buildings in the selected region
-      final fetchedBuildings = await apiService.fetchMockBuildingsInRegion(overlay.bounds);
+      final fetchedBuildings = await apiService.fetchBuildingsInRegion(overlay.bounds);
 
       setState(() {
         buildings = fetchedBuildings;
@@ -756,7 +756,7 @@ class _MapScreenState extends State<MapScreen> {
 
           // Information panel when buildings are loaded
           // Bottom Sheet
-          if (buildings.isNotEmpty && selectedOverlay != null && showBottomSheet)
+          if (selectedOverlay != null && showBottomSheet)
             Positioned.fill(
               child: GestureDetector(
                 onTap: () {

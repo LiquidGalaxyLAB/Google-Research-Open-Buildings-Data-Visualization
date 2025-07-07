@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 class KMLData {
-  static const String baseUrl = 'http://192.168.1.14:8080'; // Replace with your actual API URL
+  static const String baseUrl = 'http://10.136.176.167:8080'; // Replace with your actual API URL
 
   // Main function to fetch KML data
   static Future<String?> fetchBuildingsKML({
