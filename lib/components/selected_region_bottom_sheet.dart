@@ -39,11 +39,10 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
   late TabController _tabController;
   int _selectedTabIndex = 0;
 
-  // KML data state variables
+  // KML data state variables (only for region metadata)
   String? _kmlData;
   bool _isLoadingKMLData = false;
   String? _kmlErrorMessage;
-  List<BuildingData> _kmlBuildings = [];
   String? _actualRegionName;
   Timer? _debounceTimer;
 
@@ -115,29 +114,12 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
 
   Future<void> _fetchKMLData() async {
     try {
-      // Extract coordinates from the selected overlay bounds
       final minLat = widget.selectedOverlay.bounds.southWest.latitude;
       final maxLat = widget.selectedOverlay.bounds.northEast.latitude;
       final minLng = widget.selectedOverlay.bounds.southWest.longitude;
       final maxLng = widget.selectedOverlay.bounds.northEast.longitude;
 
-      // For now, simulate network call with mock data to avoid actual network issues
-      await Future.delayed(const Duration(seconds: 2)); // Simulate network delay
-
-      // Generate mock KML data instead of actual network call
-      final mockKMLData = _generateMockKMLData();
-
-      if (mounted) {
-        setState(() {
-          _kmlData = mockKMLData;
-          _kmlBuildings = _parseKMLData(mockKMLData);
-          _actualRegionName = _extractRegionNameFromKML(mockKMLData);
-          _isLoadingKMLData = true;
-        });
-      }
-
-      // TODO: Uncomment when actual KML service is ready
-
+      // Call the real KML API (only for region metadata)
       final kmlData = await KMLData.fetchBuildingsKML(
         context: context,
         minLng: minLng,
@@ -146,97 +128,52 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
         maxLat: maxLat,
       );
 
-      if (kmlData != null) {
-        if (mounted) {
+      if (mounted) {
+        if (kmlData != null && kmlData.isNotEmpty) {
           setState(() {
             _kmlData = kmlData;
-            _kmlBuildings = _parseKMLData(kmlData);
             _actualRegionName = _extractRegionNameFromKML(kmlData);
             _isLoadingKMLData = false;
           });
-        }
-      } else {
-        if (mounted) {
+        } else {
           setState(() {
-            _kmlErrorMessage = "No data available for this region";
+            _kmlData = null;
+            _kmlErrorMessage = "No region metadata available";
             _isLoadingKMLData = false;
           });
         }
       }
-
     } catch (e) {
+      if (mounted) {
+        setState(() {
+          _kmlData = null;
+          _kmlErrorMessage = "Failed to fetch region data: ${e.toString()}";
+          _isLoadingKMLData = false;
+        });
+      }
       rethrow;
     }
   }
 
-  String _generateMockKMLData() {
-    return '''<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2">
-  <Document>
-    <name>Mock Building Data</name>
-    <Placemark>
-      <name>Sample Building</name>
-    </Placemark>
-  </Document>
-</kml>''';
-  }
-
-  List<BuildingData> _parseKMLData(String kmlData) {
-    List<BuildingData> buildings = [];
-
-    if (kmlData.isNotEmpty) {
-      final random = Random();
-      final buildingCount = 3 + random.nextInt(8);
-
-      for (int i = 0; i < buildingCount; i++) {
-        List<LatLng> polygonPoints = _generateRandomPolygon(random);
-
-        buildings.add(BuildingData(
-          id: 'kml_building_$i',
-          area: 500 + random.nextDouble() * 2000,
-          confidenceScore: 0.7 + random.nextDouble() * 0.3,
-          polygonPoints: polygonPoints,
-        ));
-      }
-    }
-
-    return buildings;
-  }
-
-  List<LatLng> _generateRandomPolygon(Random random) {
-    final centerLat = widget.selectedOverlay.bounds.southWest.latitude +
-        random.nextDouble() * (widget.selectedOverlay.bounds.northEast.latitude -
-            widget.selectedOverlay.bounds.southWest.latitude);
-    final centerLng = widget.selectedOverlay.bounds.southWest.longitude +
-        random.nextDouble() * (widget.selectedOverlay.bounds.northEast.longitude -
-            widget.selectedOverlay.bounds.southWest.longitude);
-
-    final latOffset = 0.0001 + random.nextDouble() * 0.0002;
-    final lngOffset = 0.0001 + random.nextDouble() * 0.0002;
-
-    return [
-      LatLng(centerLat - latOffset, centerLng - lngOffset),
-      LatLng(centerLat + latOffset, centerLng - lngOffset),
-      LatLng(centerLat + latOffset, centerLng + lngOffset),
-      LatLng(centerLat - latOffset, centerLng + lngOffset),
-      LatLng(centerLat - latOffset, centerLng - lngOffset),
-    ];
-  }
-
   String? _extractRegionNameFromKML(String kmlData) {
-    // Simple extraction - in real implementation, parse XML properly
-    if (kmlData.contains('<name>') && kmlData.contains('</name>')) {
-      final startIndex = kmlData.indexOf('<name>') + 6;
-      final endIndex = kmlData.indexOf('</name>', startIndex);
-      if (endIndex > startIndex) {
-        return kmlData.substring(startIndex, endIndex);
+    try {
+      if (kmlData.contains('<name>') && kmlData.contains('</name>')) {
+        final startIndex = kmlData.indexOf('<name>') + 6;
+        final endIndex = kmlData.indexOf('</name>', startIndex);
+        if (endIndex > startIndex) {
+          final name = kmlData.substring(startIndex, endIndex).trim();
+          return name.isNotEmpty ? name : null;
+        }
       }
+      return null;
+    } catch (e) {
+      return null;
     }
-    return null;
   }
 
+  // Buildings always come from ApiService (widget.buildings)
   List<BuildingData> get _effectiveBuildings {
-    return _kmlBuildings.isNotEmpty ? _kmlBuildings : widget.buildings;
+    return widget.buildings;
   }
 
   double get _averageBuildingSize {
@@ -536,7 +473,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
                 child: _buildStatCard(
                   icon: Icons.square_foot,
                   iconColor: Colors.green,
-                  title: '${_averageBuildingSize.toStringAsFixed(0)} m²',
+                  title: _effectiveBuildings.isEmpty ? '-' : '${_averageBuildingSize.toStringAsFixed(0)} m²',
                   subtitle: 'Avg. Size',
                   backgroundColor: Colors.green.withOpacity(0.1),
                 ),
@@ -562,7 +499,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
                 child: _buildStatCard(
                   icon: Icons.analytics,
                   iconColor: Colors.purple,
-                  title: '${_effectiveBuildings.isEmpty ? 0 : (_effectiveBuildings.fold(0.0, (sum, b) => sum + b.confidenceScore) / _effectiveBuildings.length * 100).toStringAsFixed(0)}%',
+                  title: _effectiveBuildings.isEmpty ? '-' : '${(_effectiveBuildings.fold(0.0, (sum, b) => sum + b.confidenceScore) / _effectiveBuildings.length * 100).toStringAsFixed(0)}%',
                   subtitle: 'Avg. Confidence',
                   backgroundColor: Colors.purple.withOpacity(0.1),
                 ),
@@ -658,7 +595,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.apartment, size: 64, color: Colors.grey[400]),
+              Icon(Icons.remove, size: 64, color: Colors.grey[400]),
               const SizedBox(height: 16),
               Text(
                 'No buildings found',
@@ -669,7 +606,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
               ),
               const SizedBox(height: 8),
               Text(
-                'Try selecting a different region or refresh the data',
+                'Try selecting a different region or check if the area has building data',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey[500],
@@ -678,9 +615,9 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
               ),
               const SizedBox(height: 16),
               ElevatedButton.icon(
-                onPressed: _isLoadingKMLData ? null : _handleUserSelection,
+                onPressed: widget.onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Refresh Data'),
+                label: const Text('Retry'),
               ),
             ],
           ),
@@ -772,11 +709,11 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
           const SizedBox(height: 12),
           _buildDetailRow('Buildings Found:', '${_effectiveBuildings.length}'),
           const SizedBox(height: 12),
-          _buildDetailRow('Data Source:', _kmlData != null ? 'KML Data' : 'Default Data'),
+          _buildDetailRow('Data Source:', _effectiveBuildings.isNotEmpty ? 'API Data' : 'No Data'),
 
           if (_kmlData != null) ...[
             const SizedBox(height: 12),
-            _buildDetailRow('KML Status:', 'Successfully loaded'),
+            _buildDetailRow('Region Metadata:', 'Available'),
           ],
 
           const SizedBox(height: 24),

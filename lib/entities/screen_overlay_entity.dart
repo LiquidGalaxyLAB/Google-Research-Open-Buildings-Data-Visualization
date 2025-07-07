@@ -83,7 +83,7 @@ class ScreenOverlayEntity {
   factory ScreenOverlayEntity.logos() {
     return ScreenOverlayEntity(
       name: 'LogoSO',
-      icon: 'https://3.bp.blogspot.com/-_YIxhCFTj2k/XHvEHZaAmhI/AAAAAAAG8f8/zKPYvP8y-xwXf4fJcAIwNOrUS6Ssrv8OgCLcBGAs/s1600/LOGO%2BLIQUID%2BGALAXY.jpg',
+      icon: 'https://blogger.googleusercontent.com/img/a/AVvXsEiQMMLcxUGWIpXQTieIcsWGdBfUPlDcGLvLy1JTyEnXj_Vp8NkSRlyZt2co4Qs_9zXDGu0Oxze2maGxNatF6NY5JiTHd_BYlaGJjaK2504w6GEDmUlmMr-hDLJjku2e2MRr-gizRm_XBDRi97swlKQzzNqbF0_neUdINhsx7rBQ6KgLSJRp-cCddy0HFC8v',
       overlayX: 0,
       overlayY: 1,
       screenX: 0.02,

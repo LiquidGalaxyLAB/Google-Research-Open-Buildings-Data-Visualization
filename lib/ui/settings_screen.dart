@@ -1,5 +1,7 @@
 import 'dart:convert';
-
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,6 +9,8 @@ import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../services/lg_connection.dart';
+import '../entities/screen_overlay_entity.dart';
+import '../entities/kml_entity.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -97,7 +101,14 @@ class LiquidGalaxyConfigScreen extends StatefulWidget {
 class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool isConnected = false;
-  late LGConnection _lgConnection;
+
+  // SSH client for direct commands
+  SSHClient? _sshClient;
+  String _host = '';
+  String _port = '';
+  String _username = '';
+  String _password = '';
+  String _numberOfRigs = '';
 
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _ipController = TextEditingController();
@@ -110,9 +121,20 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   @override
   void initState() {
     super.initState();
-    _lgConnection = LGConnection();
     _tabController = TabController(length: 2, vsync: this);
     _loadPreferences();
+  }
+
+  // Calculate left screen for logo placement
+  int get leftScreen {
+    final rigs = int.tryParse(_numberOfRigs);
+    if (rigs == null || rigs <= 0) {
+      return 1;
+    }
+    if (rigs == 1) {
+      return 1;
+    }
+    return (rigs / 2).floor() + 2;
   }
 
   Future<void> _loadPreferences() async {
@@ -123,8 +145,39 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
       _rigsController.text = prefs.getString('lg_rigs') ?? '';
       _usernameController.text = prefs.getString('lg_user') ?? '';
       _passwordController.text = prefs.getString('lg_pass') ?? '';
-      isConnected = prefs.getBool('lg_connected') ?? false;
+
+      // Update internal variables
+      _host = _ipController.text;
+      _port = _portController.text;
+      _username = _usernameController.text;
+      _password = _passwordController.text;
+      _numberOfRigs = _rigsController.text;
     });
+
+    // Check if we should attempt auto-connection
+    if (_host.isNotEmpty && _username.isNotEmpty && _password.isNotEmpty) {
+      try {
+        bool connected = await _connectSSH();
+        setState(() {
+          isConnected = connected;
+        });
+
+        // If connection successful, automatically set logo
+        if (connected) {
+          try {
+            await setLogo();
+            print('Logo automatically set on app startup');
+          } catch (e) {
+            print('Failed to automatically set logo on startup: $e');
+          }
+        }
+      } catch (e) {
+        print('Auto-connection failed: $e');
+        setState(() {
+          isConnected = false;
+        });
+      }
+    }
   }
 
   Future<void> _savePreferences() async {
@@ -135,11 +188,153 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
     await prefs.setString('lg_user', _usernameController.text);
     await prefs.setString('lg_pass', _passwordController.text);
     await prefs.setBool('lg_connected', isConnected);
+
+    // Update internal variables
+    _host = _ipController.text;
+    _port = _portController.text;
+    _username = _usernameController.text;
+    _password = _passwordController.text;
+    _numberOfRigs = _rigsController.text;
+  }
+
+  // Enhanced SSH connection method with better error handling
+  Future<bool> _connectSSH() async {
+    try {
+      if (_host.isEmpty || _port.isEmpty || _username.isEmpty || _password.isEmpty) {
+        print('Missing connection credentials');
+        return false;
+      }
+
+      // Close existing connection if any
+      _sshClient?.close();
+
+      final socket = await SSHSocket.connect(_host, int.parse(_port));
+      _sshClient = SSHClient(
+        socket,
+        username: _username,
+        onPasswordRequest: () => _password,
+      );
+
+      // Test the connection with a simple command
+      await _sshClient?.run('echo "Connection test"');
+
+      return true;
+    } catch (e) {
+      print('SSH connection failed: $e');
+      _sshClient?.close();
+      _sshClient = null;
+      return false;
+    }
+  }
+
+  // Check if current connection is still alive
+  Future<bool> _isConnectionAlive() async {
+    try {
+      if (_sshClient == null) return false;
+
+      // Test with a simple command
+      await _sshClient?.run('echo "alive"');
+      return true;
+    } catch (e) {
+      print('Connection check failed: $e');
+      return false;
+    }
+  }
+
+  // Refresh connection status
+  Future<void> _refreshConnectionStatus() async {
+    bool alive = await _isConnectionAlive();
+    if (!alive && isConnected) {
+      // Connection was lost, try to reconnect
+      bool reconnected = await _connectSSH();
+      setState(() {
+        isConnected = reconnected;
+      });
+
+      if (reconnected) {
+        try {
+          await setLogo();
+          print('Reconnected and logo set');
+        } catch (e) {
+          print('Failed to set logo after reconnection: $e');
+        }
+      }
+    } else {
+      setState(() {
+        isConnected = alive;
+      });
+    }
+  }
+
+  // Set logo on Liquid Galaxy
+  Future<void> setLogo() async {
+    try {
+      if (_sshClient == null) {
+        bool connected = await _connectSSH();
+        if (!connected) {
+          throw Exception('Failed to establish SSH connection');
+        }
+      }
+
+      // Create screen overlay using the entity
+      final screenOverlay = ScreenOverlayEntity.logos();
+
+      // Create complete KML document with proper structure
+      final kmlContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document id="slave_$leftScreen">
+    <name>LG-Logo</name>
+    <open>1</open>
+    ${screenOverlay.tag}
+  </Document>
+</kml>''';
+
+      // Send to the correct slave screen with proper escaping
+      String command = "echo '${kmlContent.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_$leftScreen.kml";
+
+      await _sshClient?.run(command);
+
+      print('Logo set successfully on screen $leftScreen');
+
+    } catch (e) {
+      print('Failed to set logo: $e');
+      rethrow;
+    }
+  }
+
+  // Clean logo from Liquid Galaxy
+  Future<void> cleanLogo() async {
+    try {
+      if (_sshClient == null) {
+        bool connected = await _connectSSH();
+        if (!connected) {
+          throw Exception('Failed to establish SSH connection');
+        }
+      }
+
+      // Create a proper blank KML document
+      String blankKML = '''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document id="slave_$leftScreen">
+    <name>Blank</name>
+  </Document>
+</kml>''';
+
+      // Clean the logo from the left screen
+      String command = "echo '${blankKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_$leftScreen.kml";
+
+      await _sshClient?.run(command);
+
+      print('Logo cleaned successfully from screen $leftScreen');
+    } catch (e) {
+      print('Failed to clean logo: $e');
+      rethrow;
+    }
   }
 
   @override
   void dispose() {
-    _lgConnection.disconnect();
+    _sshClient?.close();
     _tabController.dispose();
     _ipController.dispose();
     _portController.dispose();
@@ -267,8 +462,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
           _buildActionButton(
             'SET SLAVES REFRESH',
                 () async {
-              await _executeAction('Setting slaves refresh...', () =>
-                  _lgConnection.setSlavesRefresh());
+              await _executeAction('Setting slaves refresh...', setSlavesRefresh);
             },
           ),
 
@@ -276,8 +470,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
           _buildActionButton(
             'RESET SLAVES REFRESH',
                 () async {
-              await _executeAction('Resetting slaves refresh...', () =>
-                  _lgConnection.resetSlavesRefresh());
+              await _executeAction('Resetting slaves refresh...', resetSlavesRefresh);
             },
           ),
 
@@ -285,8 +478,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
           _buildActionButton(
             'CLEAR KML + LOGOS',
                 () async {
-              await _executeAction('Clearing KML and logos...', () =>
-                  _lgConnection.clearKMLAndLogos());
+              await _executeAction('Clearing KML and logos...', clearKMLAndLogos);
             },
           ),
 
@@ -294,8 +486,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
           _buildActionButton(
             'RELAUNCH',
                 () async {
-              await _executeAction(
-                  'Relaunching LG...', () => _lgConnection.relaunchLG());
+              await _executeAction('Relaunching LG...', relaunchLG);
             },
           ),
 
@@ -303,8 +494,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
           _buildActionButton(
             'REBOOT',
                 () async {
-              await _executeAction(
-                  'Rebooting LG...', () => _lgConnection.rebootLG());
+              await _executeAction('Rebooting LG...', rebootLG);
             },
           ),
 
@@ -312,8 +502,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
           _buildActionButton(
             'POWER OFF',
                 () async {
-              await _executeAction(
-                  'Powering off LG...', () => _lgConnection.powerOffLG());
+              await _executeAction('Powering off LG...', powerOffLG);
             },
           ),
 
@@ -383,7 +572,6 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
     }
   }
 
-
   Widget _buildActionButton(String text, VoidCallback? onPressed) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -403,12 +591,29 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
         const Text('Connection Status',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         const Spacer(),
-        Chip(
-          label: Text(isConnected ? 'Connected' : 'Disconnected'),
-          backgroundColor: isConnected ? Colors.green[100] : Colors.red[100],
-          avatar: CircleAvatar(
-            radius: 6,
-            backgroundColor: isConnected ? Colors.green : Colors.red,
+        GestureDetector(
+          onTap: () async {
+            // Refresh connection status when tapped
+            await _refreshConnectionStatus();
+          },
+          child: Chip(
+            label: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(isConnected ? 'Connected' : 'Disconnected'),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.refresh,
+                  size: 14,
+                  color: isConnected ? Colors.green[700] : Colors.red[700],
+                ),
+              ],
+            ),
+            backgroundColor: isConnected ? Colors.green[100] : Colors.red[100],
+            avatar: CircleAvatar(
+              radius: 6,
+              backgroundColor: isConnected ? Colors.green : Colors.red,
+            ),
           ),
         ),
       ],
@@ -628,11 +833,185 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
     _attemptLiquidGalaxyConnection(credentials);
   }
 
+  // Set Slaves Refresh Function
+  Future<void> setSlavesRefresh() async {
+    try {
+      if (_sshClient == null) {
+        bool connected = await _connectSSH();
+        if (!connected) {
+          throw Exception('Failed to establish SSH connection');
+        }
+      }
+
+      final rigs = int.tryParse(_numberOfRigs) ?? 3;
+      for (var i = 2; i <= rigs; i++) {
+        String search = '<href>##LG_PHPIFACE##kml\\/slave_$i.kml<\\/href>';
+        String replace = '<href>##LG_PHPIFACE##kml\\/slave_$i.kml<\\/href><refreshMode>onInterval<\\/refreshMode><refreshInterval>2<\\/refreshInterval>';
+
+        await _sshClient?.run(
+            'sshpass -p $_password ssh -t lg$i \'echo $_password | sudo -S sed -i "s/$search/$replace/" ~/earth/kml/slave/myplaces.kml\''
+        );
+      }
+      print('Slaves refresh set successfully');
+    } catch (e) {
+      print('Failed to set slaves refresh: $e');
+      rethrow;
+    }
+  }
+
+  // Reset Slaves Refresh Function
+  Future<void> resetSlavesRefresh() async {
+    try {
+      if (_sshClient == null) {
+        bool connected = await _connectSSH();
+        if (!connected) {
+          throw Exception('Failed to establish SSH connection');
+        }
+      }
+
+      final rigs = int.tryParse(_numberOfRigs) ?? 3;
+      for (var i = 2; i <= rigs; i++) {
+        String search = '<href>##LG_PHPIFACE##kml\\/slave_$i.kml<\\/href><refreshMode>onInterval<\\/refreshMode><refreshInterval>2<\\/refreshInterval>';
+        String replace = '<href>##LG_PHPIFACE##kml\\/slave_$i.kml<\\/href>';
+
+        await _sshClient?.run(
+            'sshpass -p $_password ssh -t lg$i \'echo $_password | sudo -S sed -i "s/$search/$replace/" ~/earth/kml/slave/myplaces.kml\''
+        );
+      }
+      print('Slaves refresh reset successfully');
+    } catch (e) {
+      print('Failed to reset slaves refresh: $e');
+      rethrow;
+    }
+  }
+
+  // Clear KML and Logos Function
+  Future<void> clearKMLAndLogos() async {
+    try {
+      if (_sshClient == null) {
+        bool connected = await _connectSSH();
+        if (!connected) {
+          throw Exception('Failed to establish SSH connection');
+        }
+      }
+
+      // Clear query file
+      await _sshClient?.run('echo "" > /tmp/query.txt');
+
+      // Clear kmls.txt
+      await _sshClient?.run("echo '' > /var/www/html/kmls.txt");
+
+      // Clear all slave KML files
+      final rigs = int.tryParse(_numberOfRigs) ?? 3;
+      for (var i = 1; i <= rigs; i++) {
+        String blankKML = '''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document id="slave_$i">
+    <n>Blank</n>
+  </Document>
+</kml>''';
+
+        String command = "echo '${blankKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_$i.kml";
+        await _sshClient?.run(command);
+      }
+
+      print('KML and logos cleared successfully');
+    } catch (e) {
+      print('Failed to clear KML and logos: $e');
+      rethrow;
+    }
+  }
+
+  // Relaunch LG Function
+  Future<void> relaunchLG() async {
+    try {
+      if (_sshClient == null) {
+        bool connected = await _connectSSH();
+        if (!connected) {
+          throw Exception('Failed to establish SSH connection');
+        }
+      }
+
+      final rigs = int.tryParse(_numberOfRigs) ?? 3;
+      for (var i = 1; i <= rigs; i++) {
+        String cmd = """RELAUNCH_CMD="\\
+          if [ -f /etc/init/lxdm.conf ]; then
+            export SERVICE=lxdm
+          elif [ -f /etc/init/lightdm.conf ]; then
+            export SERVICE=lightdm
+          else
+            exit 1
+          fi
+          if  [[ \\\$(service \\\$SERVICE status) =~ 'stop' ]]; then
+            echo $_password | sudo -S service \\\${SERVICE} start
+          else
+            echo $_password | sudo -S service \\\${SERVICE} restart
+          fi
+          " && sshpass -p $_password ssh -x -t lg@lg$i "\$RELAUNCH_CMD\"""";
+
+        await _sshClient?.run(cmd);
+      }
+      print('LG relaunched successfully');
+    } catch (e) {
+      print('Failed to relaunch LG: $e');
+      rethrow;
+    }
+  }
+
+  // Reboot LG Function
+  Future<void> rebootLG() async {
+    try {
+      if (_sshClient == null) {
+        bool connected = await _connectSSH();
+        if (!connected) {
+          throw Exception('Failed to establish SSH connection');
+        }
+      }
+
+      final rigs = int.tryParse(_numberOfRigs) ?? 3;
+      for (var i = 1; i <= rigs; i++) {
+        await _sshClient?.run(
+            'sshpass -p $_password ssh -t lg$i "echo $_password | sudo -S reboot"'
+        );
+      }
+      print('LG rebooted successfully');
+    } catch (e) {
+      print('Failed to reboot LG: $e');
+      rethrow;
+    }
+  }
+
+  // Power Off LG Function
+  Future<void> powerOffLG() async {
+    try {
+      if (_sshClient == null) {
+        bool connected = await _connectSSH();
+        if (!connected) {
+          throw Exception('Failed to establish SSH connection');
+        }
+      }
+
+      final rigs = int.tryParse(_numberOfRigs) ?? 3;
+      for (var i = 1; i <= rigs; i++) {
+        await _sshClient?.run(
+            'sshpass -p $_password ssh -t lg$i "echo $_password | sudo -S poweroff"'
+        );
+      }
+      print('LG powered off successfully');
+    } catch (e) {
+      print('Failed to power off LG: $e');
+      rethrow;
+    }
+  }
+
   Future<void> _attemptLiquidGalaxyConnection(
       Map<String, String> credentials) async {
     try {
-      // Connect to LG
-      await _lgConnection.connect();
+      // Establish SSH connection using dartssh2
+      bool sshConnected = await _connectSSH();
+      if (!sshConnected) {
+        throw Exception('Failed to establish SSH connection');
+      }
 
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
@@ -645,11 +1024,20 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
       // Save the connected state
       _savePreferences();
 
+      // Automatically set logo when connection is established
+      try {
+        await setLogo();
+        print('Logo automatically set on connection');
+      } catch (e) {
+        print('Failed to automatically set logo: $e');
+        // Don't fail the connection if logo setting fails
+      }
+
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Successfully connected to Liquid Galaxy!'),
+            content: Text('Successfully connected to Liquid Galaxy! Logo displayed.'),
             backgroundColor: Colors.green,
           ),
         );
@@ -684,9 +1072,10 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
       }
     }
   }
-
 }
 
+// Keep all other classes (QRScannerScreen, VisualizationSettingsScreen, DataSettingsScreen, AboutScreen)
+// exactly the same as they were in the original code...
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({Key? key}) : super(key: key);
 
