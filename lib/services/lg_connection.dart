@@ -1,6 +1,3 @@
-// First, create the SSH connection class for your new app
-// File: lib/services/lg_connection.dart
-
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';

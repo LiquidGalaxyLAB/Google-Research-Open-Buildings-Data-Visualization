@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../services/lg_connection.dart';
+
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
 
@@ -95,6 +97,7 @@ class LiquidGalaxyConfigScreen extends StatefulWidget {
 class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool isConnected = false;
+  late LGConnection _lgConnection;
 
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _ipController = TextEditingController();
@@ -107,6 +110,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   @override
   void initState() {
     super.initState();
+    _lgConnection = LGConnection();
     _tabController = TabController(length: 2, vsync: this);
     _loadPreferences();
   }
@@ -135,6 +139,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
 
   @override
   void dispose() {
+    _lgConnection.disconnect();
     _tabController.dispose();
     _ipController.dispose();
     _portController.dispose();
@@ -210,9 +215,17 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
             ),
             const SizedBox(height: 16),
 
-            _buildTextField(label: 'IP Address', controller: _ipController, validator: _validateIP),
-            _buildTextField(label: 'Port', controller: _portController, keyboardType: TextInputType.number,  validator: _validateNumber),
-            _buildTextField(label: 'Rigs', controller: _rigsController, keyboardType: TextInputType.number, validator: _validateNumber),
+            _buildTextField(label: 'IP Address',
+                controller: _ipController,
+                validator: _validateIP),
+            _buildTextField(label: 'Port',
+                controller: _portController,
+                keyboardType: TextInputType.number,
+                validator: _validateNumber),
+            _buildTextField(label: 'Rigs',
+                controller: _rigsController,
+                keyboardType: TextInputType.number,
+                validator: _validateNumber),
             _buildTextField(label: 'Username', controller: _usernameController),
             _buildTextField(
               label: 'Password',
@@ -220,8 +233,10 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
               isPassword: true,
               obscureText: _obscurePassword,
               suffixIcon: IconButton(
-                icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                icon: Icon(
+                    _obscurePassword ? Icons.visibility : Icons.visibility_off),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
             const SizedBox(height: 24),
@@ -247,25 +262,68 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
         children: [
           _buildConnectionStatus(),
           const SizedBox(height: 16),
-          ...['SET SLAVES REFRESH', 'RESET SLAVES REFRESH', 'CLEAR KML + LOGOS', 'RELAUNCH', 'REBOOT', 'POWER OFF']
-              .map((t) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: ElevatedButton(
-              onPressed: isConnected ? () {
-                // implement action
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$t executed')));
-              } : null,
-              child: Text(t),
-              style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(48)),
-            ),
-          ))
-              .toList(),
+
+          // Set Slaves Refresh
+          _buildActionButton(
+            'SET SLAVES REFRESH',
+                () async {
+              await _executeAction('Setting slaves refresh...', () =>
+                  _lgConnection.setSlavesRefresh());
+            },
+          ),
+
+          // Reset Slaves Refresh
+          _buildActionButton(
+            'RESET SLAVES REFRESH',
+                () async {
+              await _executeAction('Resetting slaves refresh...', () =>
+                  _lgConnection.resetSlavesRefresh());
+            },
+          ),
+
+          // Clear KML + Logos
+          _buildActionButton(
+            'CLEAR KML + LOGOS',
+                () async {
+              await _executeAction('Clearing KML and logos...', () =>
+                  _lgConnection.clearKMLAndLogos());
+            },
+          ),
+
+          // Relaunch
+          _buildActionButton(
+            'RELAUNCH',
+                () async {
+              await _executeAction(
+                  'Relaunching LG...', () => _lgConnection.relaunchLG());
+            },
+          ),
+
+          // Reboot
+          _buildActionButton(
+            'REBOOT',
+                () async {
+              await _executeAction(
+                  'Rebooting LG...', () => _lgConnection.rebootLG());
+            },
+          ),
+
+          // Power Off
+          _buildActionButton(
+            'POWER OFF',
+                () async {
+              await _executeAction(
+                  'Powering off LG...', () => _lgConnection.powerOffLG());
+            },
+          ),
+
           if (!isConnected)
             const Padding(
               padding: EdgeInsets.all(8.0),
               child: Text(
                 'Connect to Liquid Galaxy first to enable these actions.',
-                style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                style: TextStyle(
+                    color: Colors.grey, fontStyle: FontStyle.italic),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -274,10 +332,76 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
     );
   }
 
+  Future<void> _executeAction(String message,
+      Future<void> Function() action) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 16),
+              Text(message),
+            ],
+          ),
+        );
+      },
+    );
+
+    try {
+      await action();
+
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Action completed successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Action failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+
+  Widget _buildActionButton(String text, VoidCallback? onPressed) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ElevatedButton(
+        onPressed: isConnected ? onPressed : null,
+        child: Text(text),
+        style: ElevatedButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+        ),
+      ),
+    );
+  }
+
   Widget _buildConnectionStatus() {
     return Row(
       children: [
-        const Text('Connection Status', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+        const Text('Connection Status',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
         const Spacer(),
         Chip(
           label: Text(isConnected ? 'Connected' : 'Disconnected'),
@@ -371,10 +495,14 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 16),
-                _buildCredentialRow('IP Address', credentials['ip'] ?? 'Not provided'),
-                _buildCredentialRow('Port', credentials['port'] ?? 'Not provided'),
-                _buildCredentialRow('Rigs', credentials['rigs'] ?? 'Not provided'),
-                _buildCredentialRow('Username', credentials['user'] ?? 'Not provided'),
+                _buildCredentialRow(
+                    'IP Address', credentials['ip'] ?? 'Not provided'),
+                _buildCredentialRow(
+                    'Port', credentials['port'] ?? 'Not provided'),
+                _buildCredentialRow(
+                    'Rigs', credentials['rigs'] ?? 'Not provided'),
+                _buildCredentialRow(
+                    'Username', credentials['user'] ?? 'Not provided'),
                 _buildCredentialRow('Password',
                     credentials['pass']?.isNotEmpty == true
                         ? '•' * (credentials['pass']?.length ?? 0)
@@ -500,10 +628,11 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
     _attemptLiquidGalaxyConnection(credentials);
   }
 
-  Future<void> _attemptLiquidGalaxyConnection(Map<String, String> credentials) async {
+  Future<void> _attemptLiquidGalaxyConnection(
+      Map<String, String> credentials) async {
     try {
-      // Dummy connection logic - replace with actual implementation
-      await _dummyLGConnection(credentials);
+      // Connect to LG
+      await _lgConnection.connect();
 
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
@@ -525,10 +654,14 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
           ),
         );
       }
-
     } catch (e) {
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
+
+      // Update connection status
+      setState(() {
+        isConnected = false;
+      });
 
       // Show error dialog
       if (mounted) {
@@ -537,7 +670,8 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
           builder: (BuildContext context) {
             return AlertDialog(
               title: const Text('Connection Failed'),
-              content: Text('Failed to connect to Liquid Galaxy: ${e.toString()}'),
+              content: Text(
+                  'Failed to connect to Liquid Galaxy: ${e.toString()}'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
@@ -551,38 +685,6 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
     }
   }
 
-  // Dummy connection function - replace with actual LG connection logic
-  Future<void> _dummyLGConnection(Map<String, String> credentials) async {
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 2));
-
-    // Dummy validation - you can replace this with actual connection logic
-    if (credentials['ip']?.isEmpty ?? true) {
-      throw Exception('IP address is required');
-    }
-
-    if (credentials['port']?.isEmpty ?? true) {
-      throw Exception('Port is required');
-    }
-
-    if (credentials['user']?.isEmpty ?? true) {
-      throw Exception('Username is required');
-    }
-
-    // Simulate random connection success/failure for demo
-    // Remove this and implement actual connection logic
-    if (DateTime.now().millisecondsSinceEpoch % 3 != 0) {
-      // Success case (2/3 chance)
-      print('Dummy LG Connection successful with:');
-      print('IP: ${credentials['ip']}');
-      print('Port: ${credentials['port']}');
-      print('Rigs: ${credentials['rigs']}');
-      print('User: ${credentials['user']}');
-    } else {
-      // Failure case for demo (1/3 chance)
-      throw Exception('Connection timeout - please check your credentials and network');
-    }
-  }
 }
 
 class QRScannerScreen extends StatefulWidget {
@@ -690,6 +792,7 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSliderSetting(
               'Confidence Threshold',
@@ -701,20 +804,43 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
                 _savePreferences();
               },
             ),
-            const SizedBox(height: 16.0),
-            _buildSwitchSetting(
-              'Show Building Labels',
-              _showBuildingLabels,
-                  (value) {
-                setState(() {
-                  _showBuildingLabels = value;
-                });
-                _savePreferences();
-              },
+
+            const SizedBox(height: 16),
+
+            Card(
+              color: Colors.blue.shade50,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.blue.shade700,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        "Set the minimum confidence threshold for visualizing buildings retrieved from the API. "
+                            "Lower thresholds show more buildings, but may include less accurate results.",
+                        style: TextStyle(
+                          color: Colors.blue.shade900,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
       ),
+
     );
   }
 
@@ -754,7 +880,7 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
             ),
             child: Slider(
               value: value,
-              min: 0.0,
+              min: 65.0,
               max: 100.0,
               onChanged: onChanged,
             ),
@@ -835,8 +961,10 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+
+            _buildInfoSetting('Data Source Version', _dataSourceVersion),
             _buildSwitchSetting(
-              'Auto-refresh Data',
+              'Visualization Mode (Hybrid/Dark)',
               _autoRefreshData,
                   (value) {
                 setState(() {
@@ -846,7 +974,6 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
               },
             ),
             const SizedBox(height: 16.0),
-            _buildInfoSetting('Data Source Version', _dataSourceVersion),
           ],
         ),
       ),
