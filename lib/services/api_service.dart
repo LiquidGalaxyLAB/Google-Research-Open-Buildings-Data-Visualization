@@ -6,7 +6,7 @@ import '../models/building_data.dart';
 
 class ApiService {
   // Use your actual Flask API URL
-  final String baseUrl = 'http://10.136.176.167:8080';
+  final String baseUrl = 'https://web-production-928c.up.railway.app';
 
   Future<List<BuildingData>> fetchBuildingsInRegion(LatLngBounds bounds) async {
     try {
@@ -25,7 +25,7 @@ class ApiService {
 
       // Make HTTP request with timeout
       final response = await http.get(uri).timeout(
-        const Duration(seconds: 30),
+        const Duration(seconds: 45),
         onTimeout: () => throw Exception('Request timeout'),
       );
 
