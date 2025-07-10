@@ -30,7 +30,7 @@ class _MapScreenState extends State<MapScreen> {
 
   // FIXED: More restrictive zoom constraints for better UX
   static const double minZoom = 12.0;  // Increased from 8.0
-  static const double maxZoom = 17.0;  // Decreased from 18.0
+  static const double maxZoom = 16.0;  // Decreased from 18.0
   static const double zoomStep = 1.0;  // Fixed zoom step
 
   // FIXED OVERLAY SETTINGS
@@ -158,9 +158,22 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // FIXED: Improved zoom in with immediate grid regeneration
+  // FIXED: Improved zoom in with immediate grid regeneration and limit message
   void _zoomIn() {
-    if (currentZoom >= maxZoom) return;
+    if (currentZoom >= maxZoom) {
+      // Show message when zoom limit is reached
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Maximum zoom in reached (${maxZoom.toInt()}x)'),
+            duration: Duration(milliseconds: 1500),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(bottom: 100, left: 16, right: 16),
+          ),
+        );
+      }
+      return;
+    }
 
     final newZoom = (currentZoom + zoomStep).clamp(minZoom, maxZoom);
     if (newZoom != currentZoom) {
@@ -178,9 +191,22 @@ class _MapScreenState extends State<MapScreen> {
     }
   }
 
-  // FIXED: Improved zoom out with immediate grid regeneration
+  // FIXED: Improved zoom out with immediate grid regeneration and limit message
   void _zoomOut() {
-    if (currentZoom <= minZoom) return;
+    if (currentZoom <= minZoom) {
+      // Show message when zoom limit is reached
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Maximum zoom out reached (${minZoom.toInt()}x)'),
+            duration: Duration(milliseconds: 1500),
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.only(bottom: 100, left: 16, right: 16),
+          ),
+        );
+      }
+      return;
+    }
 
     final newZoom = (currentZoom - zoomStep).clamp(minZoom, maxZoom);
     if (newZoom != currentZoom) {
@@ -910,7 +936,7 @@ class _MapScreenState extends State<MapScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Open Buildings Visualizer'),
+          title: Text('Open Buildings'),
           actions: [
             // Connection status indicator
             Consumer<LGService>(
