@@ -1,15 +1,17 @@
+// ui/map_screen.dart - FIXED ZOOM VERSION
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:provider/provider.dart';
 import 'package:proofofconceptapp/ui/settings_screen.dart';
 import '../models/map_overlay.dart';
 import '../models/building_data.dart';
 import '../services/api_service.dart';
+import '../services/lg_service.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:math';
-import 'package:proofofconceptapp/components/selected_region_bottom_sheet.dart';
-
+import 'package:proofofconceptapp/components/selected_region_bottom_sheet.dart' hide LatLng;
 
 class MapScreen extends StatefulWidget {
   @override
@@ -23,13 +25,20 @@ class _MapScreenState extends State<MapScreen> {
   bool showBottomSheet = false;
 
   // Initial map center and zoom
-  final LatLng initialCenter = LatLng(28.613939, 77.209021); // Example: Delhi, India
+  final LatLng initialCenter = LatLng(28.613939, 77.209021);
   final double initialZoom = 13.0;
 
-  // Zoom constraints
-  static const double minZoom = 8.0;  // Minimum zoom to prevent too large areas
-  static const double maxZoom = 18.0; // Maximum zoom for detailed view
-  static const double optimalMinZoom = 10.0; // Below this, overlays become too large
+  // FIXED: More restrictive zoom constraints for better UX
+  static const double minZoom = 12.0;  // Increased from 8.0
+  static const double maxZoom = 17.0;  // Decreased from 18.0
+  static const double zoomStep = 1.0;  // Fixed zoom step
+
+  // FIXED OVERLAY SETTINGS
+  static const double fixedOverlaySize = 0.01;
+  static const double maxOverlaySize = 0.025;
+  static const double minOverlaySize = 0.005;
+
+  double currentOverlaySize = fixedOverlaySize;
 
   // List of grid overlays
   List<MapOverlay> overlays = [];
@@ -40,11 +49,14 @@ class _MapScreenState extends State<MapScreen> {
   // Buildings to display
   List<BuildingData> buildings = [];
 
+  // Selected building for highlighting
+  BuildingData? selectedBuilding;
+
+  // Building markers list
+  List<Marker> buildingMarkers = [];
+
   // Loading state
   bool isLoading = false;
-
-  // Current map bounds
-  LatLngBounds? currentBounds;
 
   // Search related variables
   List<SearchResult> searchResults = [];
@@ -52,27 +64,30 @@ class _MapScreenState extends State<MapScreen> {
   bool showSearchResults = false;
   FocusNode searchFocusNode = FocusNode();
 
-  // Zoom related variables
+  // FIXED: Current zoom level with proper initialization
   double currentZoom = 13.0;
-  bool showZoomWarning = false;
 
   @override
   void initState() {
     super.initState();
-    // We'll generate the initial grid after the first render
+
+    // Initialize map after widget is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _generateGrid();
+      _generateFixedSizeGrid();
+      _updateCurrentZoom();
     });
 
-    // Listen for map movement to update grid
+    // FIXED: Better map event handling with zoom constraints
     mapController.mapEventStream.listen((event) {
       if (event is MapEventMoveEnd) {
-        _generateGrid();
+        _generateFixedSizeGrid();
         _updateCurrentZoom();
+        // FIXED: Enforce zoom constraints on map events
+        _enforceZoomConstraints();
       }
     });
 
-    // Listen for search focus changes
+    // Search focus listener
     searchFocusNode.addListener(() {
       if (!searchFocusNode.hasFocus && searchController.text.isEmpty) {
         setState(() {
@@ -89,45 +104,682 @@ class _MapScreenState extends State<MapScreen> {
     super.dispose();
   }
 
-  // Update current zoom level and show warnings if needed
+  // FIXED: More robust zoom level tracking
   void _updateCurrentZoom() {
     try {
       final newZoom = mapController.camera.zoom;
-      setState(() {
-        currentZoom = newZoom;
-        // Show warning if zoom is too low (area too large for API)
-        if (newZoom < optimalMinZoom) {
-          showZoomWarning = true;
-          // Auto hide warning after 3 seconds
-          Future.delayed(Duration(seconds: 3), () {
-            if (mounted) {
-              setState(() {
-                showZoomWarning = false;
-              });
-            }
-          });
-        } else {
-          showZoomWarning = false;
-        }
-      });
+      // FIXED: Clamp the zoom level and update state
+      final clampedZoom = newZoom.clamp(minZoom, maxZoom);
+      if (mounted && (currentZoom - clampedZoom).abs() > 0.01) {
+        setState(() {
+          currentZoom = clampedZoom;
+        });
+      }
     } catch (e) {
       print('Error updating zoom: $e');
+      // FIXED: Fallback to a safe zoom level
+      if (mounted) {
+        setState(() {
+          currentZoom = initialZoom.clamp(minZoom, maxZoom);
+        });
+      }
     }
   }
 
-  // Zoom in
+  // FIXED: Enforce zoom constraints programmatically with toast notification
+  void _enforceZoomConstraints() {
+    try {
+      final currentMapZoom = mapController.camera.zoom;
+      if (currentMapZoom < minZoom || currentMapZoom > maxZoom) {
+        final clampedZoom = currentMapZoom.clamp(minZoom, maxZoom);
+        mapController.move(mapController.camera.center, clampedZoom);
+
+        // Show toast notification when zoom limit is reached
+        if (mounted) {
+          String message;
+          if (currentMapZoom < minZoom) {
+            message = 'Maximum zoom out reached (${minZoom.toInt()}x)';
+          } else {
+            message = 'Maximum zoom in reached (${maxZoom.toInt()}x)';
+          }
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              duration: Duration(milliseconds: 1500),
+              behavior: SnackBarBehavior.floating,
+              margin: EdgeInsets.only(bottom: 100, left: 16, right: 16),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error enforcing zoom constraints: $e');
+    }
+  }
+
+  // FIXED: Improved zoom in with immediate grid regeneration
   void _zoomIn() {
-    final newZoom = (currentZoom + 1).clamp(minZoom, maxZoom);
-    mapController.move(mapController.camera.center, newZoom);
+    if (currentZoom >= maxZoom) return;
+
+    final newZoom = (currentZoom + zoomStep).clamp(minZoom, maxZoom);
+    if (newZoom != currentZoom) {
+      mapController.move(mapController.camera.center, newZoom);
+      setState(() {
+        currentZoom = newZoom;
+      });
+
+      // FIXED: Force grid regeneration immediately after zoom
+      Future.delayed(Duration(milliseconds: 100), () {
+        if (mounted) {
+          _generateFixedSizeGrid();
+        }
+      });
+    }
   }
 
-  // Zoom out
+  // FIXED: Improved zoom out with immediate grid regeneration
   void _zoomOut() {
-    final newZoom = (currentZoom - 1).clamp(minZoom, maxZoom);
-    mapController.move(mapController.camera.center, newZoom);
+    if (currentZoom <= minZoom) return;
+
+    final newZoom = (currentZoom - zoomStep).clamp(minZoom, maxZoom);
+    if (newZoom != currentZoom) {
+      mapController.move(mapController.camera.center, newZoom);
+      setState(() {
+        currentZoom = newZoom;
+      });
+
+      // FIXED: Force grid regeneration immediately after zoom
+      Future.delayed(Duration(milliseconds: 100), () {
+        if (mounted) {
+          _generateFixedSizeGrid();
+        }
+      });
+    }
   }
 
-  // Search for places using Nominatim API
+  // Handle building selection from bottom sheet
+  void _onBuildingSelected(BuildingData building) {
+    setState(() {
+      selectedBuilding = building;
+    });
+
+    // Calculate building center point
+    final buildingCenter = _calculateBuildingCenter(building);
+
+    // Create marker for the selected building
+    final marker = Marker(
+      point: buildingCenter,
+      width: 40,
+      height: 40,
+      child: _buildBuildingMarker(building, isSelected: true),
+    );
+
+    setState(() {
+      // Clear previous markers and add new one
+      buildingMarkers = [marker];
+    });
+
+    // FIXED: Animate to building location with zoom constraint
+    final targetZoom = max(currentZoom, 15.0).clamp(minZoom, maxZoom);
+    mapController.move(buildingCenter, targetZoom);
+
+    // Show building info
+    _showBuildingInfo(building);
+  }
+
+  // Calculate center point of a building polygon
+  LatLng _calculateBuildingCenter(BuildingData building) {
+    if (building.polygonPoints.isEmpty) {
+      // Fallback to overlay center if no polygon points
+      if (selectedOverlay != null) {
+        return LatLng(
+          (selectedOverlay!.bounds.southWest.latitude + selectedOverlay!.bounds.northEast.latitude) / 2,
+          (selectedOverlay!.bounds.southWest.longitude + selectedOverlay!.bounds.northEast.longitude) / 2,
+        );
+      }
+      return initialCenter;
+    }
+
+    double totalLat = 0;
+    double totalLng = 0;
+
+    for (final point in building.polygonPoints) {
+      totalLat += point.latitude;
+      totalLng += point.longitude;
+    }
+
+    return LatLng(
+      totalLat / building.polygonPoints.length,
+      totalLng / building.polygonPoints.length,
+    );
+  }
+
+  // Build marker widget for buildings
+  Widget _buildBuildingMarker(BuildingData building, {bool isSelected = false}) {
+    final color = isSelected
+        ? Colors.red
+        : (building.confidenceScore > 0.8 ? Colors.green :
+    building.confidenceScore > 0.5 ? Colors.orange : Colors.red);
+
+    return GestureDetector(
+      onTap: () => _showBuildingInfo(building),
+      child: Container(
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white,
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 4,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(
+          Icons.apartment,
+          color: Colors.white,
+          size: isSelected ? 24 : 20,
+        ),
+      ),
+    );
+  }
+
+  // Show building information popup with LG integration
+  void _showBuildingInfo(BuildingData building) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Consumer<LGService>(
+          builder: (context, lgService, child) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(Icons.apartment, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Building Details',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInfoRow('Area:', '${building.area.toStringAsFixed(0)} m²'),
+                  SizedBox(height: 8),
+                  _buildInfoRow('Confidence:', '${(building.confidenceScore * 100).toStringAsFixed(1)}%'),
+                  SizedBox(height: 8),
+                  _buildInfoRow('Points:', '${building.polygonPoints.length}'),
+                  if (building.polygonPoints.isNotEmpty) ...[
+                    SizedBox(height: 8),
+                    _buildInfoRow('Center:',
+                        '${_calculateBuildingCenter(building).latitude.toStringAsFixed(5)}, '
+                            '${_calculateBuildingCenter(building).longitude.toStringAsFixed(5)}'),
+                  ],
+                  SizedBox(height: 16),
+                  // Connection status indicator
+                  Row(
+                    children: [
+                      Icon(
+                        lgService.isConnected ? Icons.cloud_done : Icons.cloud_off,
+                        color: lgService.isConnected ? Colors.green : Colors.red,
+                        size: 16,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        lgService.isConnected ? 'LG Connected' : 'LG Disconnected',
+                        style: TextStyle(
+                          color: lgService.isConnected ? Colors.green : Colors.red,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Close'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: lgService.isConnected ? () async {
+                    Navigator.of(context).pop();
+                    await _sendBuildingToLiquidGalaxy(building, lgService);
+                  } : null,
+                  icon: Icon(Icons.send, size: 16),
+                  label: Text('Send to LG'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: lgService.isConnected ? Colors.blue : Colors.grey,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // Send individual building to Liquid Galaxy
+  Future<void> _sendBuildingToLiquidGalaxy(BuildingData building, LGService lgService) async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Sending to Liquid Galaxy...'),
+            ],
+          ),
+        ),
+      );
+
+      // Create KML content for the building
+      String buildingKML = _createBuildingKML(building);
+
+      // Send to Liquid Galaxy using the centralized service
+      await lgService.sendKMLToSlave(buildingKML, 2); // Send to slave 2
+
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Building sent to Liquid Galaxy successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send building to LG: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // Create KML content for individual building
+  String _createBuildingKML(BuildingData building) {
+    final center = _calculateBuildingCenter(building);
+
+    // Create coordinates string for the polygon
+    String coordinates = building.polygonPoints
+        .map((point) => '${point.longitude},${point.latitude},0')
+        .join(' ');
+
+    // Close the polygon by adding the first point at the end
+    if (building.polygonPoints.isNotEmpty) {
+      final firstPoint = building.polygonPoints.first;
+      coordinates += ' ${firstPoint.longitude},${firstPoint.latitude},0';
+    }
+
+    String placemark = '''
+      <Placemark>
+        <name>Open Buildings - Building Footprint</name>
+        <description>
+          <![CDATA[
+            <b>Building Information:</b><br/>
+            Area: ${building.area.toStringAsFixed(0)} m²<br/>
+            Confidence Score: ${(building.confidenceScore * 100).toStringAsFixed(1)}%<br/>
+            Number of Points: ${building.polygonPoints.length}<br/>
+            Center: ${center.latitude.toStringAsFixed(6)}, ${center.longitude.toStringAsFixed(6)}
+          ]]>
+        </description>
+        <Style>
+          <LineStyle>
+            <color>ff0000ff</color>
+            <width>3</width>
+          </LineStyle>
+          <PolyStyle>
+            <color>7f0000ff</color>
+          </PolyStyle>
+        </Style>
+        <Polygon>
+          <extrude>1</extrude>
+          <altitudeMode>clampToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>$coordinates</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+        <LookAt>
+          <longitude>${center.longitude}</longitude>
+          <latitude>${center.latitude}</latitude>
+          <altitude>0</altitude>
+          <heading>0</heading>
+          <tilt>45</tilt>
+          <range>500</range>
+          <gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+        </LookAt>
+      </Placemark>
+    ''';
+
+    return '''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document id="slave_2">
+    <name>Open Buildings Visualization</name>
+    <open>1</open>
+    <Folder>
+      <name>Selected Building</name>
+      <open>1</open>
+      $placemark
+    </Folder>
+  </Document>
+</kml>''';
+  }
+
+  // Handle sending entire region to Liquid Galaxy
+  Future<void> _handleSendRegionToLiquidGalaxy() async {
+    final lgService = Provider.of<LGService>(context, listen: false);
+
+    if (!lgService.isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please connect to Liquid Galaxy first'),
+          backgroundColor: Colors.orange,
+          action: SnackBarAction(
+            label: 'Connect',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LiquidGalaxyConfigScreen()),
+              );
+            },
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Text('Sending region to Liquid Galaxy...'),
+            ],
+          ),
+        ),
+      );
+
+      // Create KML for the entire region with all buildings
+      String regionKML = _createRegionKML();
+
+      // Send to Liquid Galaxy
+      await lgService.sendKMLToSlave(regionKML, 2);
+
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Region with ${buildings.length} buildings sent to Liquid Galaxy!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send region to LG: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // Create KML for entire region with all buildings
+  String _createRegionKML() {
+    if (selectedOverlay == null) return '';
+
+    String placemarks = '';
+
+    for (int i = 0; i < buildings.length; i++) {
+      final building = buildings[i];
+      final center = _calculateBuildingCenter(building);
+
+      // Create coordinates string for the polygon
+      String coordinates = building.polygonPoints
+          .map((point) => '${point.longitude},${point.latitude},0')
+          .join(' ');
+
+      // Close the polygon by adding the first point at the end
+      if (building.polygonPoints.isNotEmpty) {
+        final firstPoint = building.polygonPoints.first;
+        coordinates += ' ${firstPoint.longitude},${firstPoint.latitude},0';
+      }
+
+      // Color based on confidence score
+      String color = building.confidenceScore > 0.8
+          ? '7f00ff00'  // Green with transparency
+          : building.confidenceScore > 0.5
+          ? '7f0080ff'  // Orange with transparency
+          : '7f0000ff';  // Red with transparency
+
+      String lineColor = building.confidenceScore > 0.8
+          ? 'ff00ff00'  // Green
+          : building.confidenceScore > 0.5
+          ? 'ff0080ff'  // Orange
+          : 'ff0000ff';  // Red
+
+      placemarks += '''
+        <Placemark>
+          <name>Building ${i + 1}</name>
+          <description>
+            <![CDATA[
+              <b>Building ${i + 1}</b><br/>
+              Area: ${building.area.toStringAsFixed(0)} m²<br/>
+              Confidence: ${(building.confidenceScore * 100).toStringAsFixed(1)}%<br/>
+              Points: ${building.polygonPoints.length}<br/>
+              Center: ${center.latitude.toStringAsFixed(6)}, ${center.longitude.toStringAsFixed(6)}
+            ]]>
+          </description>
+          <Style>
+            <LineStyle>
+              <color>$lineColor</color>
+              <width>2</width>
+            </LineStyle>
+            <PolyStyle>
+              <color>$color</color>
+            </PolyStyle>
+          </Style>
+          <Polygon>
+            <extrude>1</extrude>
+            <altitudeMode>clampToGround</altitudeMode>
+            <outerBoundaryIs>
+              <LinearRing>
+                <coordinates>$coordinates</coordinates>
+              </LinearRing>
+            </outerBoundaryIs>
+          </Polygon>
+        </Placemark>
+      ''';
+    }
+
+    // Calculate region center for LookAt
+    final regionCenter = LatLng(
+      (selectedOverlay!.bounds.southWest.latitude + selectedOverlay!.bounds.northEast.latitude) / 2,
+      (selectedOverlay!.bounds.southWest.longitude + selectedOverlay!.bounds.northEast.longitude) / 2,
+    );
+
+    return '''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document id="slave_2">
+    <name>Open Buildings - Region Visualization</name>
+    <open>1</open>
+    <description>Region containing ${buildings.length} buildings from Google Open Buildings dataset</description>
+    <LookAt>
+      <longitude>${regionCenter.longitude}</longitude>
+      <latitude>${regionCenter.latitude}</latitude>
+      <altitude>0</altitude>
+      <heading>0</heading>
+      <tilt>60</tilt>
+      <range>2000</range>
+      <gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
+    </LookAt>
+    <Folder>
+      <name>Buildings (${buildings.length} total)</name>
+      <open>1</open>
+      $placemarks
+    </Folder>
+  </Document>
+</kml>''';
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(color: Colors.black87),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Clear building selection
+  void _clearBuildingSelection() {
+    setState(() {
+      selectedBuilding = null;
+      buildingMarkers.clear();
+    });
+  }
+
+  // FIXED SIZE GRID GENERATION
+  void _generateFixedSizeGrid() {
+    LatLngBounds bounds = _getCurrentBounds();
+
+    final latSpan = bounds.northEast.latitude - bounds.southWest.latitude;
+    final lngSpan = bounds.northEast.longitude - bounds.southWest.longitude;
+
+    final cellsLat = (latSpan / currentOverlaySize).ceil() + 2;
+    final cellsLng = (lngSpan / currentOverlaySize).ceil() + 2;
+
+    final startLat = bounds.southWest.latitude - currentOverlaySize;
+    final startLng = bounds.southWest.longitude - currentOverlaySize;
+
+    List<MapOverlay> newOverlays = [];
+
+    for (int i = 0; i < cellsLat; i++) {
+      for (int j = 0; j < cellsLng; j++) {
+        final south = startLat + (i * currentOverlaySize);
+        final west = startLng + (j * currentOverlaySize);
+        final north = south + currentOverlaySize;
+        final east = west + currentOverlaySize;
+
+        final overlayBounds = LatLngBounds(
+          LatLng(south, west),
+          LatLng(north, east),
+        );
+
+        newOverlays.add(MapOverlay(
+          id: 'fixed_overlay_${i}_${j}',
+          bounds: overlayBounds,
+        ));
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        overlays = newOverlays;
+      });
+    }
+  }
+
+  LatLngBounds _getCurrentBounds() {
+    try {
+      final center = mapController.camera.center;
+      final zoom = mapController.camera.zoom;
+
+      final screenWidth = MediaQuery.of(context).size.width;
+      final screenHeight = MediaQuery.of(context).size.height;
+
+      final degreesPerPixel = 360 / (256 * pow(2, zoom));
+
+      final latSpan = (screenHeight * degreesPerPixel) / 2;
+      final lngSpan = (screenWidth * degreesPerPixel) / 2;
+
+      return LatLngBounds(
+        LatLng(center.latitude - latSpan, center.longitude - lngSpan),
+        LatLng(center.latitude + latSpan, center.longitude + lngSpan),
+      );
+    } catch (e) {
+      return LatLngBounds(
+        LatLng(initialCenter.latitude - 0.05, initialCenter.longitude - 0.05),
+        LatLng(initialCenter.latitude + 0.05, initialCenter.longitude + 0.05),
+      );
+    }
+  }
+
+  void _adjustOverlaySize(double delta) {
+    setState(() {
+      currentOverlaySize = (currentOverlaySize + delta).clamp(minOverlaySize, maxOverlaySize);
+    });
+    _generateFixedSizeGrid();
+  }
+
+  double _getOverlayAreaInKm() {
+    final areaInDegrees = currentOverlaySize * currentOverlaySize;
+    return areaInDegrees * 111 * 111;
+  }
+
+  // Search functionality
   Future<void> _searchPlaces(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -154,47 +806,42 @@ class _MapScreenState extends State<MapScreen> {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          searchResults = data.map((item) => SearchResult.fromJson(item)).toList();
-          isSearching = false;
-        });
+        if (mounted) {
+          setState(() {
+            searchResults = data.map((item) => SearchResult.fromJson(item)).toList();
+            isSearching = false;
+          });
+        }
       } else {
         throw Exception('Failed to search places');
       }
     } catch (e) {
-      print('Search error: $e');
-      setState(() {
-        isSearching = false;
-        searchResults = [];
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Search failed. Please try again.')),
-      );
+      if (mounted) {
+        setState(() {
+          isSearching = false;
+          searchResults = [];
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Search failed. Please try again.')),
+        );
+      }
     }
   }
 
-  // Navigate to selected location
   void _goToLocation(SearchResult result) {
     final latLng = LatLng(result.lat, result.lon);
-
-    // Animate to the location
-    mapController.move(latLng, 15.0);
-
-    // Clear search and hide results
+    // FIXED: Respect zoom constraints when navigating to search results
+    final targetZoom = 15.0.clamp(minZoom, maxZoom);
+    mapController.move(latLng, targetZoom);
     setState(() {
       showSearchResults = false;
       searchResults = [];
+      currentZoom = targetZoom;
     });
-
-    // Unfocus search field
     searchFocusNode.unfocus();
-
-    // Update search text to show selected location
     searchController.text = result.displayName;
   }
 
-  // Clear search
   void _clearSearch() {
     searchController.clear();
     setState(() {
@@ -204,140 +851,12 @@ class _MapScreenState extends State<MapScreen> {
     searchFocusNode.unfocus();
   }
 
-  // Get the current visible map bounds
-  LatLngBounds _getCurrentBounds() {
-    // If we have stored bounds from a previous calculation, use those as fallback
-    if (currentBounds != null) {
-      return currentBounds!;
-    }
-
-    // Default bounds around the initial center if we can't calculate
-    return LatLngBounds(
-      LatLng(initialCenter.latitude - 0.05, initialCenter.longitude - 0.05),
-      LatLng(initialCenter.latitude + 0.05, initialCenter.longitude + 0.05),
-    );
-  }
-
-  // Generate a grid of overlays based on current map bounds
-  void _generateGrid() {
-    // For the latest flutter_map versions, we need to work with the current map state
-
-    // Default bounds as fallback
-    LatLngBounds bounds;
-    double zoom = initialZoom; // Default to initial zoom if we can't get current
-
-    // Try to access map state using reflection since direct access is no longer available
-    try {
-      // This is a workaround - in a real app, consider refactoring to use flutter_map's
-      // latest approach with MapCamera and FollowerWidget which are more reliable
-
-      // Get the current map state from the visible MapOptions
-      final mapPosition = mapController.camera;
-      final center = mapPosition.center;
-      zoom = mapPosition.zoom;
-
-      // Estimate the bounds based on the screen size and zoom level
-      // This is an approximation - at zoom level 1, about 0.3 degrees per 100 pixels
-      final pixelsToDegrees = 0.3 / zoom;
-      final width = MediaQuery.of(context).size.width;
-      final height = MediaQuery.of(context).size.height;
-
-      // Calculate the approximate bounds
-      final latSpan = height * pixelsToDegrees / 100;
-      final lngSpan = width * pixelsToDegrees / 100;
-
-      bounds = LatLngBounds(
-        LatLng(center.latitude - latSpan/2, center.longitude - lngSpan/2),
-        LatLng(center.latitude + latSpan/2, center.longitude + lngSpan/2),
-      );
-
-      // Store for future reference
-      currentBounds = bounds;
-    } catch (e) {
-      print('Error calculating bounds: $e');
-      // Fallback to current bounds or default if we can't calculate
-      bounds = currentBounds ?? LatLngBounds(
-        LatLng(initialCenter.latitude - 0.05, initialCenter.longitude - 0.05),
-        LatLng(initialCenter.latitude + 0.05, initialCenter.longitude + 0.05),
-      );
-    }
-
-    // Calculate adaptive grid size based on zoom level
-    // The grid size gets smaller as zoom increases, and larger as zoom decreases
-    double baseGridSize = 0.01;
-    double zoomFactor = zoom / 13.0; // Normalize to our initial zoom
-
-    // Dynamic grid sizing with more intelligent scaling
-    double gridSizeLat, gridSizeLng;
-
-    if (zoom < 10) {
-      // Large areas - bigger grid cells to prevent API overload
-      gridSizeLat = baseGridSize * 4 / zoomFactor;
-      gridSizeLng = baseGridSize * 4 / zoomFactor;
-    } else if (zoom < 13) {
-      // Medium areas - standard grid cells
-      gridSizeLat = baseGridSize * 2 / zoomFactor;
-      gridSizeLng = baseGridSize * 2 / zoomFactor;
-    } else {
-      // Small areas - smaller grid cells for precision
-      gridSizeLat = baseGridSize / zoomFactor;
-      gridSizeLng = baseGridSize / zoomFactor;
-    }
-
-    // Ensure minimum grid size to prevent too many cells
-    gridSizeLat = gridSizeLat.clamp(0.002, 0.1);
-    gridSizeLng = gridSizeLng.clamp(0.002, 0.1);
-
-    // Calculate number of cells needed to cover the viewport
-    final cellsLat = ((bounds.northEast.latitude - bounds.southWest.latitude) / gridSizeLat).ceil();
-    final cellsLng = ((bounds.northEast.longitude - bounds.southWest.longitude) / gridSizeLng).ceil();
-
-    // Limit maximum number of cells to prevent performance issues
-    final maxCells = 50;
-    if (cellsLat * cellsLng > maxCells * maxCells) {
-      print('Warning: Too many grid cells (${cellsLat * cellsLng}), reducing grid density');
-      // Increase grid size to reduce cell count
-      final scaleFactor = sqrt(cellsLat * cellsLng / (maxCells * maxCells)); // Fixed: use sqrt function
-      gridSizeLat *= scaleFactor;
-      gridSizeLng *= scaleFactor;
-    }
-
-    List<MapOverlay> newOverlays = [];
-
-    // Create grid cells
-    final actualCellsLat = ((bounds.northEast.latitude - bounds.southWest.latitude) / gridSizeLat).ceil().clamp(1, maxCells);
-    final actualCellsLng = ((bounds.northEast.longitude - bounds.southWest.longitude) / gridSizeLng).ceil().clamp(1, maxCells);
-
-    for (int i = 0; i < actualCellsLat; i++) {
-      for (int j = 0; j < actualCellsLng; j++) {
-        final south = bounds.southWest.latitude + (i * gridSizeLat);
-        final west = bounds.southWest.longitude + (j * gridSizeLng);
-        final north = (south + gridSizeLat).clamp(bounds.southWest.latitude, bounds.northEast.latitude);
-        final east = (west + gridSizeLng).clamp(bounds.southWest.longitude, bounds.northEast.longitude);
-
-        final overlayBounds = LatLngBounds(
-          LatLng(south, west),
-          LatLng(north, east),
-        );
-
-        newOverlays.add(MapOverlay(
-          id: 'overlay_${i}_${j}_${zoom.toStringAsFixed(1)}',
-          bounds: overlayBounds,
-        ));
-      }
-    }
-
-    setState(() {
-      overlays = newOverlays;
-    });
-
-    print('Generated ${newOverlays.length} grid cells at zoom level ${zoom.toStringAsFixed(1)}');
-  }
-
-  // Handle tap on an overlay
+  // Handle overlay tap
   void _handleOverlayTap(MapOverlay overlay) async {
+    // Clear any existing building selection when selecting new overlay
+    _clearBuildingSelection();
+
     setState(() {
-      // Deselect previous overlay
       if (selectedOverlay != null) {
         final index = overlays.indexWhere((o) => o.id == selectedOverlay!.id);
         if (index >= 0) {
@@ -345,195 +864,201 @@ class _MapScreenState extends State<MapScreen> {
         }
       }
 
-      // Select new overlay
       final index = overlays.indexWhere((o) => o.id == overlay.id);
       if (index >= 0) {
         overlays[index] = overlays[index].copyWith(isSelected: true);
         selectedOverlay = overlays[index];
       }
 
-      // Clear previous buildings
       buildings = [];
       isLoading = true;
-      showBottomSheet = true; // Add this line
+      showBottomSheet = true;
     });
 
     try {
-      // Fetch buildings in the selected region
       final fetchedBuildings = await apiService.fetchBuildingsInRegion(overlay.bounds);
-
-      setState(() {
-        buildings = fetchedBuildings;
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          buildings = fetchedBuildings;
+          isLoading = false;
+        });
+      }
     } catch (e) {
-      print('Error fetching buildings: $e');
-      setState(() {
-        isLoading = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load buildings: $e')),
-      );
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load buildings: $e')),
+        );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-        onWillPop: () async {
-      if (showBottomSheet) {
-        setState(() {
-          showBottomSheet = false;
-        });
-        return false;
-      }
-      return true;
-    },
-    child: Scaffold(
-      appBar: AppBar(
-        title: Text('Open Buildings Visualizer'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: _togosettings,
-          ),
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: _generateGrid,
-          ),
-        ],
-      ),
-      body: Stack(
-        children: [
-          FlutterMap(
-            mapController: mapController,
-            options: MapOptions(
-              initialCenter: initialCenter,
-              initialZoom: initialZoom,
-              maxZoom: maxZoom,
-              minZoom: minZoom,
-              onTap: (_, point) {
-                // Hide search results when map is tapped
-                if (showSearchResults) {
-                  setState(() {
-                    showSearchResults = false;
-                  });
-                  searchFocusNode.unfocus();
-                }
-
-                // Find which overlay was tapped
-                for (final overlay in overlays) {
-                  if (overlay.containsPoint(point)) {
-                    _handleOverlayTap(overlay);
-                    break;
-                  }
-                }
+      onWillPop: () async {
+        if (showBottomSheet) {
+          setState(() {
+            showBottomSheet = false;
+            _clearBuildingSelection();
+          });
+          return false;
+        }
+        return true;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Open Buildings Visualizer'),
+          actions: [
+            // Connection status indicator
+            Consumer<LGService>(
+              builder: (context, lgService, child) {
+                return IconButton(
+                  icon: Icon(
+                    lgService.isConnected ? Icons.cloud_done : Icons.cloud_off,
+                    color: lgService.isConnected ? Colors.green : Colors.red,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LiquidGalaxyConfigScreen()),
+                    );
+                  },
+                  tooltip: lgService.isConnected ? 'LG Connected' : 'LG Disconnected',
+                );
               },
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                subdomains: ['a', 'b', 'c'],
+            IconButton(
+              icon: Icon(Icons.settings),
+              onPressed: _togosettings,
+            ),
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: _generateFixedSizeGrid,
+            ),
+            // Clear selection button
+            if (selectedBuilding != null)
+              IconButton(
+                icon: Icon(Icons.clear_all),
+                onPressed: _clearBuildingSelection,
+                tooltip: 'Clear building selection',
               ),
-              // Draw the grid overlays
-              PolygonLayer(
-                polygons: overlays.map((overlay) {
-                  return Polygon(
-                    points: [
-                      overlay.bounds.southWest,
-                      LatLng(overlay.bounds.northEast.latitude, overlay.bounds.southWest.longitude),
-                      overlay.bounds.northEast,
-                      LatLng(overlay.bounds.southWest.latitude, overlay.bounds.northEast.longitude),
-                    ],
-                    borderColor: overlay.isSelected ? Colors.red : Colors.blue,
-                    borderStrokeWidth: 2.0,
-                    color: overlay.isSelected ?
-                    Colors.red.withOpacity(0.2) :
-                    Colors.blue.withOpacity(0.1),
-                  );
-                }).toList(),
-              ),
-              // Draw building footprints
-              PolygonLayer(
-                polygons: buildings.map((building) {
-                  // Color based on confidence score
-                  final color = building.confidenceScore > 0.8 ?
-                  Colors.green :
-                  (building.confidenceScore > 0.5 ?
-                  Colors.orange :
-                  Colors.red);
+          ],
+        ),
+        body: Stack(
+          children: [
+            // FIXED: THE ACTUAL MAP WIDGET WITH PROPER ZOOM CONSTRAINTS
+            FlutterMap(
+              mapController: mapController,
+              options: MapOptions(
+                initialCenter: initialCenter,
+                initialZoom: initialZoom,
+                // FIXED: Enforce zoom constraints in MapOptions
+                maxZoom: maxZoom,
+                minZoom: minZoom,
+                // FIXED: Add interactionOptions to control zoom behavior
+                interactionOptions: InteractionOptions(
+                  flags: InteractiveFlag.all,
+                  // FIXED: Ensure pinch-to-zoom respects constraints
+                  enableMultiFingerGestureRace: true,
+                ),
+                onTap: (_, point) {
+                  if (showSearchResults) {
+                    setState(() {
+                      showSearchResults = false;
+                    });
+                    searchFocusNode.unfocus();
+                  }
 
-                  return Polygon(
-                    points: building.polygonPoints,
-                    borderColor: color,
-                    borderStrokeWidth: 1.5,
-                    color: color.withOpacity(0.5),
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
+                  // Check if we tapped on an overlay
+                  bool overlayTapped = false;
+                  for (final overlay in overlays) {
+                    if (overlay.containsPoint(point)) {
+                      _handleOverlayTap(overlay);
+                      overlayTapped = true;
+                      break;
+                    }
+                  }
 
-          // Search Bar
-          Positioned(
-            top: 16,
-            left: 16,
-            right: 16,
-            child: Column(
+                  // If no overlay was tapped, clear building selection
+                  if (!overlayTapped) {
+                    _clearBuildingSelection();
+                  }
+                },
+              ),
               children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 6,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: TextField(
-                    controller: searchController,
-                    focusNode: searchFocusNode,
-                    decoration: InputDecoration(
-                      hintText: 'Search for a location',
-                      prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
-                      suffixIcon: searchController.text.isNotEmpty
-                          ? IconButton(
-                        icon: Icon(Icons.clear, color: Colors.grey[600]),
-                        onPressed: _clearSearch,
-                      )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    ),
-                    onChanged: (value) {
-                      // Debounce search to avoid too many API calls
-                      Future.delayed(Duration(milliseconds: 500), () {
-                        if (searchController.text == value) {
-                          _searchPlaces(value);
-                        }
-                      });
-                    },
-                    onTap: () {
-                      if (searchResults.isNotEmpty || searchController.text.isNotEmpty) {
-                        setState(() {
-                          showSearchResults = true;
-                        });
-                      }
-                    },
-                  ),
+                // CARTODB TILE LAYER - WORKS WITHOUT 403 ERRORS
+                TileLayer(
+                  urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', // No {r}
+                  subdomains: const ['a', 'b', 'c', 'd'],
+                  userAgentPackageName: 'com.example.openbuildings',
+                  maxZoom: 20,
+                  additionalOptions: const {
+                    'attribution': '© OpenStreetMap contributors © CartoDB',
+                  },
                 ),
 
-                // Search Results
-                if (showSearchResults)
+                // Fixed-size grid overlays with improved aesthetics
+                PolygonLayer(
+                  polygons: overlays.map((overlay) {
+                    return Polygon(
+                      points: [
+                        overlay.bounds.southWest,
+                        LatLng(overlay.bounds.northEast.latitude, overlay.bounds.southWest.longitude),
+                        overlay.bounds.northEast,
+                        LatLng(overlay.bounds.southWest.latitude, overlay.bounds.northEast.longitude),
+                      ],
+                      // FIXED: Improved aesthetic colors - gray border and mild gray fill
+                      borderColor: overlay.isSelected ? Colors.red : Colors.grey[600]!,
+                      borderStrokeWidth: 2.0,
+                      color: overlay.isSelected
+                          ? Colors.red.withOpacity(0.2)
+                          : Colors.grey[300]!.withOpacity(0.15),
+                    );
+                  }).toList(),
+                ),
+
+                // Building footprints
+                PolygonLayer(
+                  polygons: buildings.map((building) {
+                    final isHighlighted = selectedBuilding != null &&
+                        selectedBuilding!.polygonPoints == building.polygonPoints;
+
+                    final color = isHighlighted
+                        ? Colors.red
+                        : (building.confidenceScore > 0.8
+                        ? Colors.green
+                        : (building.confidenceScore > 0.5 ? Colors.orange : Colors.red));
+
+                    return Polygon(
+                      points: building.polygonPoints,
+                      borderColor: color,
+                      borderStrokeWidth: isHighlighted ? 3.0 : 1.5,
+                      color: color.withOpacity(isHighlighted ? 0.7 : 0.5),
+                    );
+                  }).toList(),
+                ),
+
+                // Building markers layer
+                MarkerLayer(
+                  markers: buildingMarkers,
+                ),
+              ],
+            ),
+
+            // Search Bar
+            Positioned(
+              top: 16,
+              left: 16,
+              right: 16,
+              child: Column(
+                children: [
                   Container(
-                    margin: EdgeInsets.only(top: 8),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black26,
@@ -542,266 +1067,395 @@ class _MapScreenState extends State<MapScreen> {
                         ),
                       ],
                     ),
-                    constraints: BoxConstraints(maxHeight: 200),
-                    child: isSearching
-                        ? Container(
-                      padding: EdgeInsets.all(20),
-                      child: Center(
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                            SizedBox(width: 12),
-                            Text('Searching...'),
-                          ],
-                        ),
+                    child: TextField(
+                      controller: searchController,
+                      focusNode: searchFocusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Search for a location',
+                        prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                        suffixIcon: searchController.text.isNotEmpty
+                            ? IconButton(
+                          icon: Icon(Icons.clear, color: Colors.grey[600]),
+                          onPressed: _clearSearch,
+                        )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                       ),
-                    )
-                        : searchResults.isEmpty
-                        ? Container(
-                      padding: EdgeInsets.all(20),
-                      child: Text(
-                        'No results found',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    )
-                        : ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: searchResults.length,
-                      itemBuilder: (context, index) {
-                        final result = searchResults[index];
-                        return ListTile(
-                          leading: Icon(Icons.location_on, color: Colors.blue),
-                          title: Text(
-                            result.name,
-                            style: TextStyle(fontWeight: FontWeight.w500),
-                          ),
-                          subtitle: Text(
-                            result.address,
-                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          onTap: () => _goToLocation(result),
-                          dense: true,
-                        );
+                      onChanged: (value) {
+                        Future.delayed(Duration(milliseconds: 500), () {
+                          if (searchController.text == value) {
+                            _searchPlaces(value);
+                          }
+                        });
+                      },
+                      onTap: () {
+                        if (searchResults.isNotEmpty || searchController.text.isNotEmpty) {
+                          setState(() {
+                            showSearchResults = true;
+                          });
+                        }
                       },
                     ),
                   ),
-              ],
+                  // Search results
+                  if (showSearchResults)
+                    Container(
+                      margin: EdgeInsets.only(top: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 6,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      constraints: BoxConstraints(maxHeight: 200),
+                      child: isSearching
+                          ? Container(
+                        padding: EdgeInsets.all(20),
+                        child: Center(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              SizedBox(width: 12),
+                              Text('Searching...'),
+                            ],
+                          ),
+                        ),
+                      )
+                          : searchResults.isEmpty
+                          ? Container(
+                        padding: EdgeInsets.all(20),
+                        child: Text(
+                          'No results found',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      )
+                          : ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: searchResults.length,
+                        itemBuilder: (context, index) {
+                          final result = searchResults[index];
+                          return ListTile(
+                            leading: Icon(Icons.location_on, color: Colors.blue),
+                            title: Text(
+                              result.name,
+                              style: TextStyle(fontWeight: FontWeight.w500),
+                            ),
+                            subtitle: Text(
+                              result.address,
+                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            onTap: () => _goToLocation(result),
+                            dense: true,
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
 
-          // Zoom Controls
-          Positioned(
-            right: 16,
-            top: MediaQuery.of(context).size.height * 0.4,
-            child: Column(
-              children: [
-                // Zoom In Button
-                Container(
+            // FIXED: Enhanced Controls Panel with better zoom button responsiveness
+            Positioned(
+              right: 16,
+              top: MediaQuery.of(context).size.height * 0.3,
+              child: Column(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          'Overlay Size',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          '${_getOverlayAreaInKm().toStringAsFixed(1)} km²',
+                          style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                        ),
+                        SizedBox(height: 8),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            GestureDetector(
+                              onTap: () => _adjustOverlaySize(-0.002),
+                              child: Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: Colors.blue,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Icon(Icons.remove, color: Colors.white, size: 16),
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            GestureDetector(
+                              onTap: () => _adjustOverlaySize(0.002),
+                              child: Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: Colors.blue,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Icon(Icons.add, color: Colors.white, size: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 16),
+
+                  // FIXED: Improved zoom controls with better visual feedback
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        // FIXED: Better button state management
+                        onTap: currentZoom < maxZoom ? _zoomIn : null,
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          child: Icon(
+                            Icons.add,
+                            // FIXED: Clear visual feedback for disabled state
+                            color: currentZoom >= maxZoom ? Colors.grey[400] : Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(height: 8),
+
+                  // FIXED: Improved zoom level display
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          '${currentZoom.toStringAsFixed(1)}x',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        // FIXED: Add zoom range indicator
+                        Text(
+                          '${minZoom.toInt()}-${maxZoom.toInt()}',
+                          style: TextStyle(
+                            fontSize: 8,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(height: 8),
+
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        // FIXED: Better button state management
+                        onTap: currentZoom > minZoom ? _zoomOut : null,
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          child: Icon(
+                            Icons.remove,
+                            // FIXED: Clear visual feedback for disabled state
+                            color: currentZoom <= minZoom ? Colors.grey[400] : Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Loading indicator
+            if (isLoading)
+              Center(
+                child: Container(
+                  padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Colors.black45,
                     borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text(
+                        'Loading buildings...',
+                        style: TextStyle(color: Colors.white),
                       ),
                     ],
                   ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: currentZoom < maxZoom ? _zoomIn : null,
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        child: Icon(
-                          Icons.add,
-                          color: currentZoom < maxZoom ? Colors.black87 : Colors.grey,
+                ),
+              ),
+
+            // Bottom Sheet
+            if (selectedOverlay != null && showBottomSheet)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      showBottomSheet = false;
+                      _clearBuildingSelection();
+                    });
+                  },
+                  child: Container(
+                    color: Colors.black26,
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: GestureDetector(
+                        onTap: () {},
+                        child: SelectedRegionBottomSheet(
+                          selectedOverlay: selectedOverlay!,
+                          buildings: buildings,
+                          isLoading: isLoading,
+                          onSendToLiquidGalaxy: _handleSendRegionToLiquidGalaxy,
+                          onBuildingTap: _onBuildingSelected,
+                          onVisualizeHistoricalChanges: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Loading historical data...')),
+                            );
+                          },
                         ),
                       ),
                     ),
                   ),
                 ),
+              ),
 
-                SizedBox(height: 8),
-
-                // Current Zoom Level Indicator
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            // Selected building info banner
+            if (selectedBuilding != null)
+              Positioned(
+                bottom: showBottomSheet ? MediaQuery.of(context).size.height * 0.6 + 20 : 20,
+                left: 16,
+                right: 16,
+                child: Container(
+                  padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Colors.red,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black26,
-                        blurRadius: 4,
+                        blurRadius: 6,
                         offset: Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: Text(
-                    '${currentZoom.toStringAsFixed(1)}x',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: currentZoom < optimalMinZoom ? Colors.orange : Colors.black87,
-                    ),
-                  ),
-                ),
-
-                SizedBox(height: 8),
-
-                // Zoom Out Button
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
+                  child: Row(
+                    children: [
+                      Icon(Icons.apartment, color: Colors.white, size: 20),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Selected Building',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              'Area: ${selectedBuilding!.area.toStringAsFixed(0)} m² • Confidence: ${(selectedBuilding!.confidenceScore * 100).toStringAsFixed(0)}%',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _clearBuildingSelection,
+                        icon: Icon(Icons.close, color: Colors.white, size: 18),
+                        constraints: BoxConstraints(minWidth: 32, minHeight: 32),
+                        padding: EdgeInsets.zero,
                       ),
                     ],
                   ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(8),
-                      onTap: currentZoom > minZoom ? _zoomOut : null,
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        child: Icon(
-                          Icons.remove,
-                          color: currentZoom > minZoom ? Colors.black87 : Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Zoom Warning
-          if (showZoomWarning)
-            Positioned(
-              top: 120,
-              left: 16,
-              right: 16,
-              child: Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.orange,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.warning, color: Colors.white, size: 20),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Zoom in for better performance. Large areas may cause API limitations.',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
-            ),
-
-          // Loading indicator
-          if (isLoading)
-            Center(
-              child: Container(
-                padding: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.black45,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text(
-                      'Loading buildings...',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-          // Information panel when buildings are loaded
-          // Bottom Sheet
-          if (selectedOverlay != null && showBottomSheet)
-            Positioned.fill(
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    showBottomSheet = false;
-                  });
-                },
-                child: Container(
-                  color: Colors.black26,
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: GestureDetector(
-                      onTap: () {}, // Prevent closing when tapping the sheet
-                      child: SelectedRegionBottomSheet(
-                        selectedOverlay: selectedOverlay!,
-                        buildings: buildings,
-                        isLoading: isLoading,
-                        onSendToLiquidGalaxy: () {
-                          // Your existing Liquid Galaxy logic
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Sending to Liquid Galaxy...')),
-                          );
-                        },
-                        onBuildingTap: (BuildingData building) {
-                          // Handle individual building tap - send to Liquid Galaxy
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Visualizing building on Liquid Galaxy...')),
-                          );
-                          // TODO: Implement dartssh2 logic here
-                        },
-                        onVisualizeHistoricalChanges: () {
-                          // Handle historical changes visualization
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Loading historical data...')),
-                          );
-                          // TODO: Implement historical data visualization
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),),
+          ],
+        ),
+      ),
     );
   }
 
@@ -831,7 +1485,8 @@ class SearchResult {
 
   factory SearchResult.fromJson(Map<String, dynamic> json) {
     return SearchResult(
-      name: json['name'] ?? json['display_name']?.split(',')[0] ?? 'Unknown Location',
+      name: json['name'] ?? json['display_name']?.split(',')[0] ??
+          'Unknown Location',
       displayName: json['display_name'] ?? 'Unknown Location',
       address: json['display_name'] ?? 'Unknown Address',
       lat: double.parse(json['lat'].toString()),
