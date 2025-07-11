@@ -5,6 +5,8 @@ import '../models/map_overlay.dart';
 import '../models/building_data.dart';
 import '../services/lg_service.dart';
 import '../ui/settings_screen.dart';
+import '../utils/colors.dart';
+
 
 class SelectedRegionBottomSheet extends StatefulWidget {
   final MapOverlay selectedOverlay;
@@ -28,10 +30,63 @@ class SelectedRegionBottomSheet extends StatefulWidget {
   _SelectedRegionBottomSheetState createState() => _SelectedRegionBottomSheetState();
 }
 
-class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
+class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
+    with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
   String _sortBy = 'area'; // 'area', 'confidence', 'points'
   bool _ascending = false;
+
+  // Tab controller for Statistics/Buildings/Details tabs
+  late TabController _tabController;
+
+  // Search functionality
+  TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this, initialIndex: 0); // Start with Statistics
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+
+    // Listen to tab changes to update the historical button visibility
+    _tabController.addListener(() {
+      setState(() {
+        // This will trigger a rebuild when tab changes to show/hide the button
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // Generate plus code for building based on its center coordinates
+  String _generatePlusCode(BuildingData building) {
+    final center = _calculateBuildingCenter(building);
+    // Simple plus code generation based on coordinates
+    final latStr = center.latitude.toStringAsFixed(4).replaceAll('.', '');
+    final lngStr = center.longitude.toStringAsFixed(4).replaceAll('.', '');
+    final hash = (center.latitude * center.longitude * 1000).abs().toInt();
+    return '${latStr.substring(0, 4)}+${lngStr.substring(0, 4)}${hash.toString().substring(0, 2)}';
+  }
+
+  // Filter buildings based on search query
+  List<BuildingData> _getFilteredBuildings() {
+    if (_searchQuery.isEmpty) return widget.buildings;
+
+    return widget.buildings.where((building) {
+      final plusCode = _generatePlusCode(building).toLowerCase();
+      return plusCode.contains(_searchQuery);
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,10 +95,10 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
         return AnimatedContainer(
           duration: Duration(milliseconds: 300),
           height: _isExpanded
-              ? MediaQuery.of(context).size.height * 0.8
-              : MediaQuery.of(context).size.height * 0.6,
+              ? MediaQuery.of(context).size.height * 0.85
+              : MediaQuery.of(context).size.height * 0.65,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.surface,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
@@ -61,11 +116,14 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
               // Handle bar and header
               _buildHeader(lgService),
 
-              // Content area
+              // Tab bar
+              _buildTabBar(),
+
+              // Content area with tabs
               Expanded(
                 child: widget.isLoading
                     ? _buildLoadingContent()
-                    : _buildContent(lgService),
+                    : _buildTabContent(lgService),
               ),
             ],
           ),
@@ -84,7 +142,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: AppColors.outlineVariant,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -94,23 +152,22 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
           // Header content
           Row(
             children: [
-              Icon(Icons.map, color: Colors.blue, size: 24),
-              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Selected Region',
+                      'Visualize Results',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: AppColors.onSurface,
                       ),
                     ),
                     Text(
-                      '${widget.buildings.length} buildings found',
+                      'Open Building Footprints Queried',
                       style: TextStyle(
-                        color: Colors.grey[600],
+                        color: AppColors.onSurfaceVariant,
                         fontSize: 14,
                       ),
                     ),
@@ -118,106 +175,532 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
                 ),
               ),
 
-              // Connection status indicator
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: lgService.isConnected
-                      ? Colors.green.withOpacity(0.1)
-                      : Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      lgService.isConnected ? Icons.cloud_done : Icons.cloud_off,
-                      size: 14,
-                      color: lgService.isConnected ? Colors.green : Colors.red,
-                    ),
-                    SizedBox(width: 4),
-                    Text(
-                      lgService.isConnected ? 'LG Ready' : 'LG Off',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: lgService.isConnected ? Colors.green : Colors.red,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Expand/collapse button
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _isExpanded = !_isExpanded;
-                  });
+              ElevatedButton.icon(
+                onPressed: lgService.isConnected ? widget.onSendToLiquidGalaxy : () {
+                  _showConnectionDialog(context);
                 },
-                icon: Icon(
-                  _isExpanded ? Icons.expand_less : Icons.expand_more,
-                  color: Colors.grey[600],
+                icon: Icon(Icons.monitor, size: 18),
+                label: Text('Send to LG'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.onPrimary,
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
             ],
           ),
-
-          SizedBox(height: 16),
-
-          // Action buttons row
-          _buildActionButtons(lgService),
         ],
       ),
     );
   }
 
-  Widget _buildActionButtons(LGService lgService) {
-    return Row(
+  Widget _buildTabBar() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppColors.outlineVariant),
+        ),
+      ),
+      child: TabBar(
+        controller: _tabController,
+        labelColor: AppColors.primary,
+        unselectedLabelColor: AppColors.onSurfaceVariant,
+        indicatorColor: AppColors.primary,
+        indicatorWeight: 3,
+        tabs: [
+          Tab(
+            icon: Icon(Icons.bar_chart, size: 20),
+            text: 'Statistics',
+          ),
+          Tab(
+            icon: Icon(Icons.apartment, size: 20),
+            text: 'Buildings',
+          ),
+          Tab(
+            icon: Icon(Icons.description, size: 20),
+            text: 'Details',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabContent(LGService lgService) {
+    return TabBarView(
+      controller: _tabController,
       children: [
-        // Send to Liquid Galaxy button
-        Expanded(
-          flex: 2,
-          child: ElevatedButton.icon(
-            onPressed: lgService.isConnected ? widget.onSendToLiquidGalaxy : () {
-              _showConnectionDialog(context);
+        // Statistics Tab
+        _buildStatisticsTab(),
+
+        // Buildings Tab
+        _buildBuildingsTab(),
+
+        // Details Tab
+        _buildDetailsTab(),
+      ],
+    );
+  }
+
+  Widget _buildStatisticsTab() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Building Statistics',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.onSurface,
+            ),
+          ),
+          SizedBox(height: 20),
+
+          // Main Statistics Cards with responsive layout
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(constraints.maxWidth < 350 ? 16 : 20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainer,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.outlineVariant),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.apartment, color: AppColors.primary, size: constraints.maxWidth < 350 ? 28 : 32),
+                          SizedBox(height: 8),
+                          FittedBox(
+                            child: Text(
+                              '${widget.buildings.length}',
+                              style: TextStyle(
+                                fontSize: constraints.maxWidth < 350 ? 20 : 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Total Buildings',
+                            style: TextStyle(
+                              fontSize: constraints.maxWidth < 350 ? 12 : 14,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(constraints.maxWidth < 350 ? 16 : 20),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainer,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.outlineVariant),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.square_foot, color: AppColors.primary, size: constraints.maxWidth < 350 ? 28 : 32),
+                          SizedBox(height: 8),
+                          FittedBox(
+                            child: Text(
+                              '${_getAverageArea().toStringAsFixed(0)} m²',
+                              style: TextStyle(
+                                fontSize: constraints.maxWidth < 350 ? 20 : 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Avg. Size',
+                            style: TextStyle(
+                              fontSize: constraints.maxWidth < 350 ? 12 : 14,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
             },
-            icon: Icon(
-              lgService.isConnected ? Icons.send : Icons.cloud_off,
-              size: 16,
+          ),
+
+
+          SizedBox(height: 24),
+
+          // Confidence Distribution
+          Text(
+            'Confidence Distribution',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.onSurface,
             ),
-            label: Text(
-              lgService.isConnected ? 'Send to LG' : 'Connect LG',
-              style: TextStyle(fontSize: 14),
+          ),
+          SizedBox(height: 16),
+          _buildConfidenceDistribution(),
+
+          SizedBox(height: 24),
+
+          // Historical changes button - FULL WIDTH inside scroll view
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: widget.onVisualizeHistoricalChanges,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.secondaryContainer,
+                foregroundColor: AppColors.onSecondaryContainer,
+                padding: EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: AppColors.outlineVariant),
+                ),
+              ),
+              child: Text(
+                'Visualize historical changes over time',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: lgService.isConnected ? Colors.blue : Colors.orange,
-              foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+          ),
+
+          SizedBox(height: 16), // Bottom padding
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBuildingsTab() {
+    if (widget.buildings.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return Column(
+      children: [
+        // Search and sorting controls
+        _buildSearchAndControls(),
+
+        // Buildings list
+        Expanded(
+          child: _buildBuildingsList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailsTab() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Region Overview Section
+          Text(
+            'Region Overview',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+          SizedBox(height: 16),
+          _buildInfoRow('Coordinates',
+              'SW: ${widget.selectedOverlay.bounds.southWest.latitude.toStringAsFixed(5)}, ${widget.selectedOverlay.bounds.southWest.longitude.toStringAsFixed(5)}\n'
+                  'NE: ${widget.selectedOverlay.bounds.northEast.latitude.toStringAsFixed(5)}, ${widget.selectedOverlay.bounds.northEast.longitude.toStringAsFixed(5)}'
+          ),
+          SizedBox(height: 12),
+          _buildInfoRow('Region Size', '${_getRegionArea().toStringAsFixed(2)} km²'),
+          SizedBox(height: 12),
+          _buildInfoRow('Building Density', '${_getBuildingDensity().toStringAsFixed(1)} buildings/km²'),
+
+          SizedBox(height: 24),
+
+          // Data Source Information
+          Text(
+            'Data Source',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+          SizedBox(height: 16),
+          _buildInfoRow('Dataset', 'Google Open Buildings'),
+          SizedBox(height: 12),
+          _buildInfoRow('Coverage', 'Global building footprints'),
+          SizedBox(height: 12),
+          _buildInfoRow('Accuracy', 'Machine learning derived'),
+          SizedBox(height: 12),
+          _buildInfoRow('Last Updated', 'Continuously updated'),
+
+          SizedBox(height: 24),
+
+          // Technical Details
+          Text(
+            'Technical Details',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+          SizedBox(height: 16),
+          _buildInfoRow('Projection', 'WGS84 (EPSG:4326)'),
+          SizedBox(height: 12),
+          _buildInfoRow('Format', 'GeoJSON/KML'),
+          SizedBox(height: 12),
+          _buildInfoRow('Precision', '~1 meter accuracy'),
+          SizedBox(height: 12),
+          _buildInfoRow('Processing', 'Real-time analysis'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchAndControls() {
+    return Container(
+      padding: EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer,
+        border: Border(
+          bottom: BorderSide(color: AppColors.outlineVariant),
+        ),
+      ),
+      child: Column(
+        children: [
+          // Search bar
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: AppColors.outlineVariant),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.outline.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              style: TextStyle(color: AppColors.onSurface),
+              decoration: InputDecoration(
+                hintText: 'Search by Plus Code...',
+                hintStyle: TextStyle(color: AppColors.onSurfaceVariant),
+                prefixIcon: Icon(Icons.search, color: AppColors.onSurfaceVariant),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                  icon: Icon(Icons.clear, color: AppColors.onSurfaceVariant),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                )
+                    : null,
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              ),
+            ),
+          ),
+
+          SizedBox(height: 12),
+
+          // Sorting controls
+          Row(
+            children: [
+              Text(
+                'Sort by:',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.onSurface,
+                ),
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.outlineVariant),
+                  ),
+                  child: DropdownButton<String>(
+                    value: _sortBy,
+                    isExpanded: true,
+                    underline: Container(),
+                    style: TextStyle(color: AppColors.onSurface),
+                    dropdownColor: AppColors.surface,
+                    items: [
+                      DropdownMenuItem(value: 'area', child: Text('Area')),
+                      DropdownMenuItem(value: 'confidence', child: Text('Confidence')),
+                      DropdownMenuItem(value: 'points', child: Text('Complexity')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _sortBy = value!;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.outlineVariant),
+                ),
+                child: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _ascending = !_ascending;
+                    });
+                  },
+                  icon: Icon(
+                    _ascending ? Icons.arrow_upward : Icons.arrow_downward,
+                    size: 20,
+                    color: AppColors.primary,
+                  ),
+                  tooltip: _ascending ? 'Ascending' : 'Descending',
+                ),
+              ),
+            ],
+          ),
+
+          if (_searchQuery.isNotEmpty) ...[
+            SizedBox(height: 8),
+            Text(
+              'Found ${_getFilteredBuildings().length} buildings matching "$_searchQuery"',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConfidenceDistribution() {
+    final highConfidence = widget.buildings.where((b) => b.confidenceScore > 0.8).length;
+    final mediumConfidence = widget.buildings.where((b) => b.confidenceScore > 0.5 && b.confidenceScore <= 0.8).length;
+    final lowConfidence = widget.buildings.where((b) => b.confidenceScore <= 0.5).length;
+    final total = widget.buildings.length;
+
+    return Column(
+      children: [
+        _buildConfidenceBar('High (>80%)', highConfidence, total, Colors.green),
+        SizedBox(height: 8),
+        _buildConfidenceBar('Medium (50-80%)', mediumConfidence, total, Colors.orange),
+        SizedBox(height: 8),
+        _buildConfidenceBar('Low (<50%)', lowConfidence, total, Colors.red),
+      ],
+    );
+  }
+
+  Widget _buildConfidenceBar(
+      String label,
+      int count,
+      int total,
+      Color color,
+      ) {
+    final percentage = total > 0 ? (count / total) : 0.0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            // Label flexes to avoid overflow
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.onSurface,
+                ),
+              ),
+            ),
+
+            // Count + percent stays intrinsic
+            Text(
+              '$count (${(percentage * 100).toStringAsFixed(0)}%)',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.onSurface,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+
+        // Full‑width bar
+        Container(
+          width: double.infinity,
+          height: 8,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceVariant,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: percentage,
+            child: Container(
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
           ),
         ),
+      ],
+    );
+  }
 
-        SizedBox(width: 8),
 
-        // Historical data button
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: widget.onVisualizeHistoricalChanges,
-            icon: Icon(Icons.history, size: 16),
-            label: Text(
-              'History',
-              style: TextStyle(fontSize: 14),
-            ),
-            style: OutlinedButton.styleFrom(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
+  Widget _buildInfoRow(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: AppColors.onSurfaceVariant,
+          ),
+        ),
+        SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.onSurface,
           ),
         ),
       ],
@@ -229,13 +712,15 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(),
+          CircularProgressIndicator(
+            color: AppColors.primary,
+          ),
           SizedBox(height: 16),
           Text(
             'Loading buildings...',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[600],
+              color: AppColors.onSurface,
             ),
           ),
           SizedBox(height: 8),
@@ -243,29 +728,11 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
             'Please wait while we fetch building data',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[500],
+              color: AppColors.onSurfaceVariant,
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildContent(LGService lgService) {
-    if (widget.buildings.isEmpty) {
-      return _buildEmptyState();
-    }
-
-    return Column(
-      children: [
-        // Statistics and sorting controls
-        _buildStatsAndControls(),
-
-        // Buildings list
-        Expanded(
-          child: _buildBuildingsList(),
-        ),
-      ],
     );
   }
 
@@ -300,7 +767,6 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
           SizedBox(height: 24),
           OutlinedButton.icon(
             onPressed: () {
-              // Could implement region expansion or different data source
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text('Try selecting a different region or zoom level'),
@@ -315,116 +781,11 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
     );
   }
 
-  Widget _buildStatsAndControls() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!),
-        ),
-      ),
-      child: Column(
-        children: [
-          // Statistics row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem(
-                'Total Area',
-                '${_getTotalArea().toStringAsFixed(0)} m²',
-                Icons.square_foot,
-              ),
-              _buildStatItem(
-                'Avg Confidence',
-                '${_getAverageConfidence().toStringAsFixed(1)}%',
-                Icons.trending_up,
-              ),
-              _buildStatItem(
-                'Buildings',
-                '${widget.buildings.length}',
-                Icons.apartment,
-              ),
-            ],
-          ),
-
-          SizedBox(height: 12),
-
-          // Sorting controls
-          Row(
-            children: [
-              Text(
-                'Sort by:',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              SizedBox(width: 8),
-              Expanded(
-                child: DropdownButton<String>(
-                  value: _sortBy,
-                  isExpanded: true,
-                  underline: Container(),
-                  items: [
-                    DropdownMenuItem(value: 'area', child: Text('Area')),
-                    DropdownMenuItem(value: 'confidence', child: Text('Confidence')),
-                    DropdownMenuItem(value: 'points', child: Text('Complexity')),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _sortBy = value!;
-                    });
-                  },
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _ascending = !_ascending;
-                  });
-                },
-                icon: Icon(
-                  _ascending ? Icons.arrow_upward : Icons.arrow_downward,
-                  size: 20,
-                ),
-                tooltip: _ascending ? 'Ascending' : 'Descending',
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(icon, size: 20, color: Colors.blue),
-        SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildBuildingsList() {
-    List<BuildingData> sortedBuildings = List.from(widget.buildings);
+    List<BuildingData> filteredBuildings = _getFilteredBuildings();
 
     // Sort buildings based on selected criteria
-    sortedBuildings.sort((a, b) {
+    filteredBuildings.sort((a, b) {
       int comparison;
       switch (_sortBy) {
         case 'area':
@@ -442,35 +803,62 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
       return _ascending ? comparison : -comparison;
     });
 
+    if (filteredBuildings.isEmpty && _searchQuery.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+            SizedBox(height: 16),
+            Text(
+              'No buildings found',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.grey[600]),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Try a different search term',
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
-      itemCount: sortedBuildings.length,
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      itemCount: filteredBuildings.length,
       itemBuilder: (context, index) {
-        final building = sortedBuildings[index];
-        return _buildBuildingListItem(building, index + 1);
+        final building = filteredBuildings[index];
+        final plusCode = _generatePlusCode(building);
+        return _buildBuildingListItem(building, plusCode, index + 1);
       },
     );
   }
 
-  Widget _buildBuildingListItem(BuildingData building, int index) {
+  Widget _buildBuildingListItem(BuildingData building, String plusCode, int index) {
     final confidenceColor = building.confidenceScore > 0.8
-        ? Colors.green
+        ? Colors.blue
         : building.confidenceScore > 0.5
-        ? Colors.orange
-        : Colors.red;
+        ? Colors.blue.withOpacity(0.7)
+        : Colors.blue.withOpacity(0.5);
 
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      elevation: 1,
+      color: AppColors.surfaceContainerLow,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: AppColors.outlineVariant),
       ),
       child: ListTile(
+        contentPadding: const EdgeInsets.all(12),
         leading: Container(
-          width: 40,
-          height: 40,
+          width: 45,
+          height: 45,
           decoration: BoxDecoration(
             color: confidenceColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: confidenceColor.withOpacity(0.3)),
           ),
           child: Center(
             child: Text(
@@ -486,47 +874,63 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
         title: Row(
           children: [
             Expanded(
-              child: Text(
-                'Building $index',
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 16,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    plusCode,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      fontFamily: 'monospace',
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Building #$index',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: confidenceColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: confidenceColor.withOpacity(0.3)),
               ),
               child: Text(
                 '${(building.confidenceScore * 100).toStringAsFixed(0)}%',
                 style: TextStyle(
                   color: confidenceColor,
                   fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ],
         ),
         subtitle: Padding(
-          padding: EdgeInsets.only(top: 4),
+          padding: const EdgeInsets.only(top: 8),
           child: Row(
             children: [
-              Icon(Icons.square_foot, size: 14, color: Colors.grey[600]),
-              SizedBox(width: 4),
+              const Icon(Icons.square_foot, size: 14, color: AppColors.primary),
+              const SizedBox(width: 4),
               Text(
                 '${building.area.toStringAsFixed(0)} m²',
-                style: TextStyle(fontSize: 12),
+                style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant),
               ),
-              SizedBox(width: 12),
-              Icon(Icons.scatter_plot, size: 14, color: Colors.grey[600]),
-              SizedBox(width: 4),
+              const SizedBox(width: 12),
+              const Icon(Icons.scatter_plot, size: 14, color: AppColors.primary),
+              const SizedBox(width: 4),
               Text(
-                '${building.polygonPoints.length} points',
-                style: TextStyle(fontSize: 12),
+                '${building.polygonPoints.length} pts',
+                style: const TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant),
               ),
             ],
           ),
@@ -537,28 +941,31 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
             // View on map button
             IconButton(
               onPressed: () => widget.onBuildingTap(building),
-              icon: Icon(Icons.visibility, size: 20),
+              icon: const Icon(Icons.visibility, size: 20),
               tooltip: 'View on map',
               style: IconButton.styleFrom(
-                backgroundColor: Colors.blue.withOpacity(0.1),
-                foregroundColor: Colors.blue,
+                backgroundColor: AppColors.primary.withOpacity(0.1),
+                foregroundColor: AppColors.primary,
               ),
             ),
-            SizedBox(width: 4),
+            const SizedBox(width: 4),
             // Send individual building to LG
             Consumer<LGService>(
               builder: (context, lgService, child) {
+                final isConnected = lgService.isConnected;
                 return IconButton(
-                  onPressed: lgService.isConnected ? () {
-                    _sendIndividualBuildingToLG(building, lgService);
-                  } : null,
-                  icon: Icon(Icons.send, size: 20),
-                  tooltip: lgService.isConnected ? 'Send to LG' : 'LG not connected',
+                  onPressed: isConnected
+                      ? () => _sendIndividualBuildingToLG(building, lgService)
+                      : null,
+                  icon: const Icon(Icons.send, size: 20),
+                  tooltip: isConnected ? 'Send to LG' : 'LG not connected',
                   style: IconButton.styleFrom(
-                    backgroundColor: lgService.isConnected
-                        ? Colors.green.withOpacity(0.1)
-                        : Colors.grey.withOpacity(0.1),
-                    foregroundColor: lgService.isConnected ? Colors.green : Colors.grey,
+                    backgroundColor: isConnected
+                        ? AppColors.primary.withOpacity(0.1)
+                        : AppColors.outline.withOpacity(0.05),
+                    foregroundColor: isConnected
+                        ? AppColors.primary
+                        : AppColors.outline,
                   ),
                 );
               },
@@ -568,6 +975,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
         onTap: () => widget.onBuildingTap(building),
       ),
     );
+
   }
 
   // Send individual building to Liquid Galaxy
@@ -626,6 +1034,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
   // Create KML for individual building
   String _createIndividualBuildingKML(BuildingData building) {
     final center = _calculateBuildingCenter(building);
+    final plusCode = _generatePlusCode(building);
 
     // Create coordinates string for the polygon
     String coordinates = building.polygonPoints
@@ -640,10 +1049,11 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
 
     String placemark = '''
       <Placemark>
-        <n>Selected Building from Region</n>
+        <name>Building: $plusCode</name>
         <description>
           <![CDATA[
             <b>Building Information:</b><br/>
+            Plus Code: $plusCode<br/>
             Area: ${building.area.toStringAsFixed(0)} m²<br/>
             Confidence Score: ${(building.confidenceScore * 100).toStringAsFixed(1)}%<br/>
             Number of Points: ${building.polygonPoints.length}<br/>
@@ -683,10 +1093,10 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
     return '''<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
   <Document id="slave_2">
-    <n>Individual Building Visualization</n>
+    <name>Individual Building: $plusCode</name>
     <open>1</open>
     <Folder>
-      <n>Selected Building</n>
+      <name>Selected Building</name>
       <open>1</open>
       $placemark
     </Folder>
@@ -796,6 +1206,11 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
     return widget.buildings.fold(0.0, (sum, building) => sum + building.area);
   }
 
+  double _getAverageArea() {
+    if (widget.buildings.isEmpty) return 0.0;
+    return _getTotalArea() / widget.buildings.length;
+  }
+
   double _getAverageConfidence() {
     if (widget.buildings.isEmpty) return 0.0;
     double totalConfidence = widget.buildings.fold(
@@ -803,6 +1218,31 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet> {
           (sum, building) => sum + building.confidenceScore,
     );
     return (totalConfidence / widget.buildings.length) * 100;
+  }
+
+  double _getAverageComplexity() {
+    if (widget.buildings.isEmpty) return 0.0;
+    double totalPoints = widget.buildings.fold(
+      0.0,
+          (sum, building) => sum + building.polygonPoints.length.toDouble(),
+    );
+    return totalPoints / widget.buildings.length;
+  }
+
+  double _getRegionArea() {
+    // Calculate approximate area in km²
+    final latDiff = widget.selectedOverlay.bounds.northEast.latitude -
+        widget.selectedOverlay.bounds.southWest.latitude;
+    final lngDiff = widget.selectedOverlay.bounds.northEast.longitude -
+        widget.selectedOverlay.bounds.southWest.longitude;
+
+    // Rough approximation: 1 degree ≈ 111 km
+    return latDiff * lngDiff * 111 * 111;
+  }
+
+  double _getBuildingDensity() {
+    final regionArea = _getRegionArea();
+    return regionArea > 0 ? widget.buildings.length / regionArea : 0.0;
   }
 }
 
