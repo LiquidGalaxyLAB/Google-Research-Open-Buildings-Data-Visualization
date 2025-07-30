@@ -6,6 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../entities/screen_overlay_entity.dart';
 import '../entities/kml_entity.dart';
+import 'dart:convert';
+import 'dart:typed_data';
+
 
 enum LGConnectionStatus {
   disconnected,
@@ -53,6 +56,177 @@ class LGService extends ChangeNotifier {
     if (rigs == 1) return 1;
     return (rigs / 2).floor() + 2;
   }
+
+  int get rightScreen {
+    final rigs = int.tryParse(_numberOfRigs ?? '3');
+    if (rigs == null || rigs <= 0) return 1;
+    if (rigs == 1) return 1;
+    if (rigs == 2) return 2;
+    // For 3+ rigs, rightmost is the last screen
+    return rigs;
+  }
+
+  // Corrected debugging methods with proper return types:
+
+// Read back the KML file to see what was actually written
+  Future<Uint8List?> readKMLFile(int slaveId) async {
+    if (_client == null) return null;
+
+    try {
+      final result = await _client!.run('cat /var/www/html/kml/slave_$slaveId.kml');
+      return result;
+    } catch (e) {
+      print('Failed to read KML file: $e');
+      return null;
+    }
+  }
+
+  // Add this method to your LGService class:
+  // Update your sendKMLToLG method to include the info panel:
+
+  Future<void> sendKMLToLG(String kmlContent, double centerLat, double centerLng) async {
+    if (_client == null) {
+      throw Exception('Not connected to Liquid Galaxy');
+    }
+
+    try {
+      print('Sending KML to LG (${kmlContent.length} characters)...');
+
+      // FIX: Remove descriptions from buildings to prevent popups and fix empty styles
+      String fixedKML = kmlContent
+          .replaceAll(RegExp(r'<description>.*?</description>', dotAll: true), '') // Remove popups
+          .replaceAll('<LineStyle></LineStyle>', '<LineStyle><color>ff0000ff</color><width>2</width></LineStyle>')
+          .replaceAll('<PolyStyle></PolyStyle>', '<PolyStyle><color>7d00ff00</color><fill>1</fill><outline>1</outline></PolyStyle>')
+          .replaceAll('<IconStyle></IconStyle>', '<IconStyle><color>ff0000ff</color></IconStyle>');
+
+      // Step 1: Write the fixed KML content to main screen
+      String command = "echo '${fixedKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_2.kml";
+      await _client!.run(command);
+
+      // Step 2: Create and send info panel to rightmost screen
+     // String infoPanelKML = _createRightmostInfoPanel([]); // Start with no selected building
+      //String infoPanelCommand = "echo '${infoPanelKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_$rightScreen.kml";
+      //await _client!.run(infoPanelCommand);
+
+      // Step 3: Add building KML to kmls.txt
+      await _client!.run("echo 'http://lg1:81/kml/slave_2.kml' > /var/www/html/kmls.txt");
+
+      // Step 4: Move camera to region center
+      String searchQuery = "search=$centerLat,$centerLng";
+      await _client!.run("echo '$searchQuery' > /tmp/query.txt");
+
+      // Step 5: Wait and set closer zoom
+      await Future.delayed(Duration(seconds: 2));
+
+      String flytoQuery = "flytoview=<LookAt><longitude>$centerLng</longitude><latitude>$centerLat</latitude><altitude>0</altitude><heading>0</heading><tilt>45</tilt><range>150</range></LookAt>";
+      await _client!.run("echo '$flytoQuery' > /tmp/query.txt");
+
+      print('KML sent successfully with info panel on rightmost screen');
+
+    } catch (e) {
+      throw Exception('Failed to send KML to LG: $e');
+    }
+  }
+
+// Add this method to update the info panel when a building is selected:
+
+
+// Helper method to convert Uint8List to String for reading
+  Future<String?> readKMLFileAsString(int slaveId) async {
+    try {
+      final bytes = await readKMLFile(slaveId);
+      if (bytes == null) return null;
+
+      return utf8.decode(bytes);
+    } catch (e) {
+      print('Failed to decode KML file: $e');
+      return null;
+    }
+  }
+
+// Verify that the KML file was written correctly
+  Future<bool> verifyKMLFile(int slaveId) async {
+    if (_client == null) return false;
+
+    try {
+      final result = await _client!.run('ls -la /var/www/html/kml/slave_$slaveId.kml');
+      print('File verification for slave $slaveId: ${utf8.decode(result)}');
+
+      // Check file size
+      final sizeResult = await _client!.run('wc -c /var/www/html/kml/slave_$slaveId.kml');
+      print('File size: ${utf8.decode(sizeResult)}');
+
+      return true;
+    } catch (e) {
+      print('File verification failed: $e');
+      return false;
+    }
+  }
+
+// Test with a simple KML to verify the pipeline works
+  Future<void> sendTestKML(int slaveId) async {
+    String testKML = '''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>Test Building</name>
+    <Placemark>
+      <name>Test Point</name>
+      <Point>
+        <coordinates>-122.084,37.422,0</coordinates>
+      </Point>
+      <LookAt>
+        <longitude>-122.084</longitude>
+        <latitude>37.422</latitude>
+        <altitude>0</altitude>
+        <heading>0</heading>
+        <tilt>45</tilt>
+        <range>1000</range>
+      </LookAt>
+    </Placemark>
+  </Document>
+</kml>''';
+
+    try {
+      await sendKMLToSlave(testKML, slaveId);
+      print('Test KML sent successfully');
+
+      // Verify it was written
+      await Future.delayed(Duration(seconds: 1));
+      String? readBack = await readKMLFileAsString(slaveId);
+      if (readBack != null) {
+        print('KML read back (first 200 chars): ${readBack.substring(0, readBack.length > 200 ? 200 : readBack.length)}...');
+      } else {
+        print('Failed to read back KML file');
+      }
+
+    } catch (e) {
+      print('Test KML failed: $e');
+    }
+  }
+
+// Check LG system status
+  Future<void> checkLGStatus() async {
+    if (_client == null) return;
+
+    try {
+      // Check if Google Earth is running
+      final earthStatus = await _client!.run('pgrep -f "googleearth"');
+      print('Google Earth processes: ${utf8.decode(earthStatus)}');
+
+      // Check web server
+      final webStatus = await _client!.run('systemctl status apache2 | grep Active');
+      print('Web server status: ${utf8.decode(webStatus)}');
+
+      // Check kml directory permissions
+      final permissions = await _client!.run('ls -la /var/www/html/kml/');
+      print('KML directory permissions: ${utf8.decode(permissions)}');
+
+    } catch (e) {
+      print('Status check failed: $e');
+    }
+  }
+
+// Add this import if not already present:
 
   // Initialize service - call this once in main()
   Future<void> initialize() async {
@@ -465,23 +639,130 @@ class LGService extends ChangeNotifier {
     }
   }
 
-  // Send building data to Liquid Galaxy as KML
-  Future<void> sendBuildingToLG(dynamic buildingData, {int slaveId = 2}) async {
+  // Add this to your LGService class in lg_service.dart
+  Future<void> sendBuildingWithInfoPanel(String buildingKML, String infoPanelKML, double latitude, double longitude) async {
     if (_client == null) {
       throw Exception('Not connected to Liquid Galaxy');
     }
 
     try {
-      // Create KML content for the building
-      String buildingKML = _createBuildingKML(buildingData);
+      // Calculate rightmost screen (assuming you have 3+ screens)
+      final rigs = int.tryParse(_numberOfRigs ?? '3') ?? 3;
+      final rightmostScreen = rigs; // Last screen
 
-      // Send to specified slave
-      await sendKMLToSlave(buildingKML, slaveId);
+      // Step 1: Write the building KML file (main visualization)
+      String buildingCommand = "echo '${buildingKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_2.kml";
+      await _client!.run(buildingCommand);
 
-      print('Building sent to Liquid Galaxy on slave $slaveId');
+      // Step 2: Write the info panel to rightmost screen
+      String infoPanelCommand = "echo '${infoPanelKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_$rightmostScreen.kml";
+      await _client!.run(infoPanelCommand);
+
+      // Step 3: Add building KML to kmls.txt
+      await _client!.run("echo 'http://lg1:81/kml/slave_2.kml' > /var/www/html/kmls.txt");
+
+      // Step 4: Move camera to building location
+      String searchQuery = "search=$latitude,$longitude";
+      await _client!.run("echo '$searchQuery' > /tmp/query.txt");
+
+      print('Building sent with info panel on screen $rightmostScreen');
+
     } catch (e) {
-      print('Failed to send building to LG: $e');
-      rethrow;
+      throw Exception('Failed to send building with info panel: $e');
+    }
+  }
+
+  Future<void> sendBulkBuildingsToLG(String buildingKML, String dashboardKML, double centerLat, double centerLng) async {
+    if (_client == null) {
+      throw Exception('Not connected to Liquid Galaxy');
+    }
+
+    try {
+      // Use the rightScreen getter instead of manual calculation
+      final rightmostScreen = rightScreen;
+
+      // Step 1: Write the building KML file (same as individual)
+      String buildingCommand = "echo '${buildingKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_2.kml";
+      await _client!.run(buildingCommand);
+
+      // Step 2: Write the dashboard to rightmost screen
+      String dashboardCommand = "echo '${dashboardKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_$rightmostScreen.kml";
+      await _client!.run(dashboardCommand);
+
+      // Step 3: Add KML to kmls.txt (same as individual)
+      await _client!.run("echo 'http://lg1:81/kml/slave_2.kml' > /var/www/html/kmls.txt");
+
+      // Step 4: Move camera to region center with closer zoom (150m range)
+      String searchQuery = "search=$centerLat,$centerLng";
+      await _client!.run("echo '$searchQuery' > /tmp/query.txt");
+
+      // Step 5: Wait a moment, then set closer zoom
+      await Future.delayed(Duration(seconds: 2));
+
+      // Use flyto for precise control with 150m range
+      String flytoQuery = "flytoview=<LookAt><longitude>$centerLng</longitude><latitude>$centerLat</latitude><altitude>0</altitude><heading>0</heading><tilt>45</tilt><range>150</range></LookAt>";
+      await _client!.run("echo '$flytoQuery' > /tmp/query.txt");
+
+      print('Bulk buildings sent, dashboard on rightmost screen: $rightmostScreen');
+
+    } catch (e) {
+      throw Exception('Failed to send bulk buildings: $e');
+    }
+  }
+
+// Helper method for large KML files using SFTP
+  Future<void> _sendLargeKMLViaSFTP(String kmlContent, String fileName) async {
+    final sftp = await _client!.sftp();
+    final filePath = '/var/www/html/kml/$fileName';
+
+    try {
+      final sftpFile = await sftp.open(
+          filePath,
+          mode: SftpFileOpenMode.create | SftpFileOpenMode.write | SftpFileOpenMode.truncate
+      );
+
+      // Convert string to bytes and send in chunks for large files
+      final bytes = utf8.encode(kmlContent);
+      const chunkSize = 1024 * 1024; // 1MB chunks
+
+      for (int i = 0; i < bytes.length; i += chunkSize) {
+        final end = (i + chunkSize < bytes.length) ? i + chunkSize : bytes.length;
+        final chunk = bytes.sublist(i, end);
+        await sftpFile.write(Stream.fromIterable([Uint8List.fromList(chunk)]));
+      }
+
+      await sftpFile.close();
+      print('Large KML file sent via SFTP: $fileName (${bytes.length} bytes)');
+
+    } finally {
+      sftp.close();
+    }
+  }
+
+
+
+  // Send building data to Liquid Galaxy as KML
+  Future<void> sendBuildingToLG(String buildingKML, double latitude, double longitude) async {
+    if (_client == null) {
+      throw Exception('Not connected to Liquid Galaxy');
+    }
+
+    try {
+      // Step 1: Write the building KML file
+      String command = "echo '${buildingKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_2.kml";
+      await _client!.run(command);
+
+      // Step 2: Add KML to kmls.txt so Google Earth loads it
+      await _client!.run("echo 'http://lg1:81/kml/slave_2.kml' > /var/www/html/kmls.txt");
+
+      // Step 3: Move camera to building location using search coordinates
+      String searchQuery = "search=$latitude,$longitude";
+      await _client!.run("echo '$searchQuery' > /tmp/query.txt");
+
+      print('Building KML sent and camera moved to location: $latitude, $longitude');
+
+    } catch (e) {
+      throw Exception('Failed to send building to LG: $e');
     }
   }
 

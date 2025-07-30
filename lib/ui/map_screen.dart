@@ -1,7 +1,8 @@
-// ui/map_screen.dart - FIXED ZOOM VERSION
+// ui/map_screen.dart - THEMED VERSION WITH APP COLORS
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:proofofconceptapp/utils/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:proofofconceptapp/ui/settings_screen.dart';
 import '../models/map_overlay.dart';
@@ -12,6 +13,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'dart:math';
 import 'package:proofofconceptapp/components/selected_region_bottom_sheet.dart' hide LatLng;
+import '../utils/colors.dart';
+import 'help_screen.dart';
+
+
 
 class MapScreen extends StatefulWidget {
   @override
@@ -145,10 +150,17 @@ class _MapScreenState extends State<MapScreen> {
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(message),
+              content: Text(
+                message,
+                style: TextStyle(color: AppColors.onSurface),
+              ),
+              backgroundColor: AppColors.surfaceContainer,
               duration: Duration(milliseconds: 1500),
               behavior: SnackBarBehavior.floating,
               margin: EdgeInsets.only(bottom: 100, left: 16, right: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           );
         }
@@ -165,10 +177,17 @@ class _MapScreenState extends State<MapScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Maximum zoom in reached (${maxZoom.toInt()}x)'),
+            content: Text(
+              'Maximum zoom in reached (${maxZoom.toInt()}x)',
+              style: TextStyle(color: AppColors.onSurface),
+            ),
+            backgroundColor: AppColors.surfaceContainer,
             duration: Duration(milliseconds: 1500),
             behavior: SnackBarBehavior.floating,
             margin: EdgeInsets.only(bottom: 100, left: 16, right: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -198,10 +217,17 @@ class _MapScreenState extends State<MapScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Maximum zoom out reached (${minZoom.toInt()}x)'),
+            content: Text(
+              'Maximum zoom out reached (${minZoom.toInt()}x)',
+              style: TextStyle(color: AppColors.onSurface),
+            ),
+            backgroundColor: AppColors.surfaceContainer,
             duration: Duration(milliseconds: 1500),
             behavior: SnackBarBehavior.floating,
             margin: EdgeInsets.only(bottom: 100, left: 16, right: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -284,9 +310,9 @@ class _MapScreenState extends State<MapScreen> {
   // Build marker widget for buildings
   Widget _buildBuildingMarker(BuildingData building, {bool isSelected = false}) {
     final color = isSelected
-        ? Colors.red
+        ? AppColors.error
         : (building.confidenceScore > 0.8 ? Colors.green :
-    building.confidenceScore > 0.5 ? Colors.orange : Colors.red);
+    building.confidenceScore > 0.5 ? Colors.orange : AppColors.error);
 
     return GestureDetector(
       onTap: () => _showBuildingInfo(building),
@@ -295,7 +321,7 @@ class _MapScreenState extends State<MapScreen> {
           color: color,
           shape: BoxShape.circle,
           border: Border.all(
-            color: Colors.white,
+            color: AppColors.surfaceContainerLowest,
             width: 2,
           ),
           boxShadow: [
@@ -308,7 +334,7 @@ class _MapScreenState extends State<MapScreen> {
         ),
         child: Icon(
           Icons.apartment,
-          color: Colors.white,
+          color: AppColors.onPrimary,
           size: isSelected ? 24 : 20,
         ),
       ),
@@ -323,17 +349,22 @@ class _MapScreenState extends State<MapScreen> {
         return Consumer<LGService>(
           builder: (context, lgService, child) {
             return AlertDialog(
+              backgroundColor: AppColors.surface,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
               title: Row(
                 children: [
-                  Icon(Icons.apartment, color: Colors.blue),
+                  Icon(Icons.apartment, color: AppColors.primary),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Building Details',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.onSurface,
+                      ),
                     ),
                   ),
                 ],
@@ -359,14 +390,14 @@ class _MapScreenState extends State<MapScreen> {
                     children: [
                       Icon(
                         lgService.isConnected ? Icons.cloud_done : Icons.cloud_off,
-                        color: lgService.isConnected ? Colors.green : Colors.red,
+                        color: lgService.isConnected ? Colors.green : AppColors.error,
                         size: 16,
                       ),
                       SizedBox(width: 8),
                       Text(
                         lgService.isConnected ? 'LG Connected' : 'LG Disconnected',
                         style: TextStyle(
-                          color: lgService.isConnected ? Colors.green : Colors.red,
+                          color: lgService.isConnected ? Colors.green : AppColors.error,
                           fontSize: 12,
                         ),
                       ),
@@ -377,7 +408,7 @@ class _MapScreenState extends State<MapScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Close'),
+                  child: Text('Close', style: TextStyle(color: AppColors.onSurface)),
                 ),
                 ElevatedButton.icon(
                   onPressed: lgService.isConnected ? () async {
@@ -387,8 +418,8 @@ class _MapScreenState extends State<MapScreen> {
                   icon: Icon(Icons.send, size: 16),
                   label: Text('Send to LG'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: lgService.isConnected ? Colors.blue : Colors.grey,
-                    foregroundColor: Colors.white,
+                    backgroundColor: lgService.isConnected ? AppColors.primary : AppColors.surfaceDim,
+                    foregroundColor: lgService.isConnected ? AppColors.onPrimary : AppColors.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -407,12 +438,16 @@ class _MapScreenState extends State<MapScreen> {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surface,
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
+              CircularProgressIndicator(color: AppColors.primary),
               SizedBox(width: 16),
-              Text('Sending to Liquid Galaxy...'),
+              Text(
+                'Sending to Liquid Galaxy...',
+                style: TextStyle(color: AppColors.onSurface),
+              ),
             ],
           ),
         ),
@@ -431,8 +466,14 @@ class _MapScreenState extends State<MapScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Building sent to Liquid Galaxy successfully!'),
+            content: Text(
+              'Building sent to Liquid Galaxy successfully!',
+              style: TextStyle(color: AppColors.onPrimary),
+            ),
             backgroundColor: Colors.green,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -444,8 +485,14 @@ class _MapScreenState extends State<MapScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to send building to LG: $e'),
-            backgroundColor: Colors.red,
+            content: Text(
+              'Failed to send building to LG: $e',
+              style: TextStyle(color: AppColors.onError),
+            ),
+            backgroundColor: AppColors.error,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -530,16 +577,23 @@ class _MapScreenState extends State<MapScreen> {
     if (!lgService.isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Please connect to Liquid Galaxy first'),
+          content: Text(
+            'Please connect to Liquid Galaxy first',
+            style: TextStyle(color: AppColors.onSurface),
+          ),
           backgroundColor: Colors.orange,
           action: SnackBarAction(
             label: 'Connect',
+            textColor: AppColors.onPrimary,
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const LiquidGalaxyConfigScreen()),
               );
             },
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
           ),
         ),
       );
@@ -552,12 +606,16 @@ class _MapScreenState extends State<MapScreen> {
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surface,
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
+              CircularProgressIndicator(color: AppColors.primary),
               SizedBox(width: 16),
-              Text('Sending region to Liquid Galaxy...'),
+              Text(
+                'Sending region to Liquid Galaxy...',
+                style: TextStyle(color: AppColors.onSurface),
+              ),
             ],
           ),
         ),
@@ -576,8 +634,14 @@ class _MapScreenState extends State<MapScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Region with ${buildings.length} buildings sent to Liquid Galaxy!'),
+            content: Text(
+              'Region with ${buildings.length} buildings sent to Liquid Galaxy!',
+              style: TextStyle(color: AppColors.onPrimary),
+            ),
             backgroundColor: Colors.green,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -589,8 +653,14 @@ class _MapScreenState extends State<MapScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to send region to LG: $e'),
-            backgroundColor: Colors.red,
+            content: Text(
+              'Failed to send region to LG: $e',
+              style: TextStyle(color: AppColors.onError),
+            ),
+            backgroundColor: AppColors.error,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -705,14 +775,14 @@ class _MapScreenState extends State<MapScreen> {
             label,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: Colors.grey[700],
+              color: AppColors.onSurfaceVariant,
             ),
           ),
         ),
         Expanded(
           child: Text(
             value,
-            style: TextStyle(color: Colors.black87),
+            style: TextStyle(color: AppColors.onSurface),
           ),
         ),
       ],
@@ -848,7 +918,16 @@ class _MapScreenState extends State<MapScreen> {
           searchResults = [];
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Search failed. Please try again.')),
+          SnackBar(
+            content: Text(
+              'Search failed. Please try again.',
+              style: TextStyle(color: AppColors.onError),
+            ),
+            backgroundColor: AppColors.error,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
         );
       }
     }
@@ -915,7 +994,16 @@ class _MapScreenState extends State<MapScreen> {
           isLoading = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load buildings: $e')),
+          SnackBar(
+            content: Text(
+              'Failed to load buildings: $e',
+              style: TextStyle(color: AppColors.onError),
+            ),
+            backgroundColor: AppColors.error,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
         );
       }
     }
@@ -935,8 +1023,17 @@ class _MapScreenState extends State<MapScreen> {
         return true;
       },
       child: Scaffold(
+        backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: Text('Open Buildings'),
+          backgroundColor: AppColors.primary,
+          elevation: 0,
+          title: Text(
+            'Open Buildings',
+            style: TextStyle(
+              color: AppColors.onPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           actions: [
             // Connection status indicator
             Consumer<LGService>(
@@ -944,7 +1041,7 @@ class _MapScreenState extends State<MapScreen> {
                 return IconButton(
                   icon: Icon(
                     lgService.isConnected ? Icons.cloud_done : Icons.cloud_off,
-                    color: lgService.isConnected ? Colors.green : Colors.red,
+                    color: lgService.isConnected ? Colors.green : AppColors.error,
                   ),
                   onPressed: () {
                     Navigator.push(
@@ -957,17 +1054,22 @@ class _MapScreenState extends State<MapScreen> {
               },
             ),
             IconButton(
-              icon: Icon(Icons.settings),
+              icon: Icon(Icons.settings, color: AppColors.onPrimary),
               onPressed: _togosettings,
             ),
             IconButton(
-              icon: Icon(Icons.refresh),
-              onPressed: _generateFixedSizeGrid,
+              icon: Icon(Icons.help, color: AppColors.onPrimary),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => HelpScreen()),
+                );
+              },
             ),
             // Clear selection button
             if (selectedBuilding != null)
               IconButton(
-                icon: Icon(Icons.clear_all),
+                icon: Icon(Icons.clear_all, color: AppColors.onPrimary),
                 onPressed: _clearBuildingSelection,
                 tooltip: 'Clear building selection',
               ),
@@ -1017,12 +1119,11 @@ class _MapScreenState extends State<MapScreen> {
               children: [
                 // CARTODB TILE LAYER - WORKS WITHOUT 403 ERRORS
                 TileLayer(
-                  urlTemplate: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', // No {r}
-                  subdomains: const ['a', 'b', 'c', 'd'],
+                  urlTemplate: 'https://api.maptiler.com/maps/basic-v2/{z}/{x}/{y}.png?key=5xIHDp2mW8tDgquyuMMy',
                   userAgentPackageName: 'com.example.openbuildings',
                   maxZoom: 20,
                   additionalOptions: const {
-                    'attribution': '© OpenStreetMap contributors © CartoDB',
+                    'attribution': '© MapTiler © OpenStreetMap contributors',
                   },
                 ),
 
@@ -1036,12 +1137,12 @@ class _MapScreenState extends State<MapScreen> {
                         overlay.bounds.northEast,
                         LatLng(overlay.bounds.southWest.latitude, overlay.bounds.northEast.longitude),
                       ],
-                      // FIXED: Improved aesthetic colors - gray border and mild gray fill
-                      borderColor: overlay.isSelected ? Colors.red : Colors.grey[600]!,
+                      // THEMED: Using AppColors for overlay styling
+                      borderColor: overlay.isSelected ? AppColors.error : AppColors.outline,
                       borderStrokeWidth: 2.0,
                       color: overlay.isSelected
-                          ? Colors.red.withOpacity(0.2)
-                          : Colors.grey[300]!.withOpacity(0.15),
+                          ? AppColors.error.withOpacity(0.2)
+                          : AppColors.outlineVariant.withOpacity(0.15),
                     );
                   }).toList(),
                 ),
@@ -1053,10 +1154,10 @@ class _MapScreenState extends State<MapScreen> {
                         selectedBuilding!.polygonPoints == building.polygonPoints;
 
                     final color = isHighlighted
-                        ? Colors.red
+                        ? AppColors.error
                         : (building.confidenceScore > 0.8
                         ? Colors.green
-                        : (building.confidenceScore > 0.5 ? Colors.orange : Colors.red));
+                        : (building.confidenceScore > 0.5 ? Colors.orange : AppColors.error));
 
                     return Polygon(
                       points: building.polygonPoints,
@@ -1083,7 +1184,7 @@ class _MapScreenState extends State<MapScreen> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(25),
                       boxShadow: [
                         BoxShadow(
@@ -1096,12 +1197,14 @@ class _MapScreenState extends State<MapScreen> {
                     child: TextField(
                       controller: searchController,
                       focusNode: searchFocusNode,
+                      style: TextStyle(color: AppColors.onSurface),
                       decoration: InputDecoration(
                         hintText: 'Search for a location',
-                        prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                        hintStyle: TextStyle(color: AppColors.onSurfaceVariant),
+                        prefixIcon: Icon(Icons.search, color: AppColors.onSurfaceVariant),
                         suffixIcon: searchController.text.isNotEmpty
                             ? IconButton(
-                          icon: Icon(Icons.clear, color: Colors.grey[600]),
+                          icon: Icon(Icons.clear, color: AppColors.onSurfaceVariant),
                           onPressed: _clearSearch,
                         )
                             : null,
@@ -1129,7 +1232,7 @@ class _MapScreenState extends State<MapScreen> {
                     Container(
                       margin: EdgeInsets.only(top: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
@@ -1150,10 +1253,16 @@ class _MapScreenState extends State<MapScreen> {
                               SizedBox(
                                 width: 20,
                                 height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: AppColors.primary,
+                                ),
                               ),
                               SizedBox(width: 12),
-                              Text('Searching...'),
+                              Text(
+                                'Searching...',
+                                style: TextStyle(color: AppColors.onSurface),
+                              ),
                             ],
                           ),
                         ),
@@ -1163,7 +1272,7 @@ class _MapScreenState extends State<MapScreen> {
                         padding: EdgeInsets.all(20),
                         child: Text(
                           'No results found',
-                          style: TextStyle(color: Colors.grey[600]),
+                          style: TextStyle(color: AppColors.onSurfaceVariant),
                         ),
                       )
                           : ListView.builder(
@@ -1172,14 +1281,20 @@ class _MapScreenState extends State<MapScreen> {
                         itemBuilder: (context, index) {
                           final result = searchResults[index];
                           return ListTile(
-                            leading: Icon(Icons.location_on, color: Colors.blue),
+                            leading: Icon(Icons.location_on, color: AppColors.primary),
                             title: Text(
                               result.name,
-                              style: TextStyle(fontWeight: FontWeight.w500),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.onSurface,
+                              ),
                             ),
                             subtitle: Text(
                               result.address,
-                              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.onSurfaceVariant,
+                              ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -1193,7 +1308,7 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
 
-            // FIXED: Enhanced Controls Panel with better zoom button responsiveness
+            // THEMED: Enhanced Controls Panel with AppColors
             Positioned(
               right: 16,
               top: MediaQuery.of(context).size.height * 0.3,
@@ -1202,7 +1317,7 @@ class _MapScreenState extends State<MapScreen> {
                   Container(
                     padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -1216,12 +1331,19 @@ class _MapScreenState extends State<MapScreen> {
                       children: [
                         Text(
                           'Overlay Size',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.onSurface,
+                          ),
                         ),
                         SizedBox(height: 4),
                         Text(
                           '${_getOverlayAreaInKm().toStringAsFixed(1)} km²',
-                          style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppColors.onSurfaceVariant,
+                          ),
                         ),
                         SizedBox(height: 8),
                         Row(
@@ -1233,10 +1355,14 @@ class _MapScreenState extends State<MapScreen> {
                                 width: 30,
                                 height: 30,
                                 decoration: BoxDecoration(
-                                  color: Colors.blue,
+                                  color: AppColors.primary,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: Icon(Icons.remove, color: Colors.white, size: 16),
+                                child: Icon(
+                                  Icons.remove,
+                                  color: AppColors.onPrimary,
+                                  size: 16,
+                                ),
                               ),
                             ),
                             SizedBox(width: 4),
@@ -1246,10 +1372,14 @@ class _MapScreenState extends State<MapScreen> {
                                 width: 30,
                                 height: 30,
                                 decoration: BoxDecoration(
-                                  color: Colors.blue,
+                                  color: AppColors.primary,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
-                                child: Icon(Icons.add, color: Colors.white, size: 16),
+                                child: Icon(
+                                  Icons.add,
+                                  color: AppColors.onPrimary,
+                                  size: 16,
+                                ),
                               ),
                             ),
                           ],
@@ -1260,10 +1390,10 @@ class _MapScreenState extends State<MapScreen> {
 
                   SizedBox(height: 16),
 
-                  // FIXED: Improved zoom controls with better visual feedback
+                  // THEMED: Improved zoom controls with AppColors
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
@@ -1277,15 +1407,13 @@ class _MapScreenState extends State<MapScreen> {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(8),
-                        // FIXED: Better button state management
                         onTap: currentZoom < maxZoom ? _zoomIn : null,
                         child: Container(
                           width: 48,
                           height: 48,
                           child: Icon(
                             Icons.add,
-                            // FIXED: Clear visual feedback for disabled state
-                            color: currentZoom >= maxZoom ? Colors.grey[400] : Colors.black87,
+                            color: currentZoom >= maxZoom ? AppColors.surfaceDim : AppColors.onSurface,
                           ),
                         ),
                       ),
@@ -1294,11 +1422,11 @@ class _MapScreenState extends State<MapScreen> {
 
                   SizedBox(height: 8),
 
-                  // FIXED: Improved zoom level display
+                  // THEMED: Improved zoom level display with AppColors
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
@@ -1315,15 +1443,14 @@ class _MapScreenState extends State<MapScreen> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                            color: AppColors.onSurface,
                           ),
                         ),
-                        // FIXED: Add zoom range indicator
                         Text(
                           '${minZoom.toInt()}-${maxZoom.toInt()}',
                           style: TextStyle(
                             fontSize: 8,
-                            color: Colors.grey[600],
+                            color: AppColors.onSurfaceVariant,
                           ),
                         ),
                       ],
@@ -1334,7 +1461,7 @@ class _MapScreenState extends State<MapScreen> {
 
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
@@ -1348,15 +1475,13 @@ class _MapScreenState extends State<MapScreen> {
                       color: Colors.transparent,
                       child: InkWell(
                         borderRadius: BorderRadius.circular(8),
-                        // FIXED: Better button state management
                         onTap: currentZoom > minZoom ? _zoomOut : null,
                         child: Container(
                           width: 48,
                           height: 48,
                           child: Icon(
                             Icons.remove,
-                            // FIXED: Clear visual feedback for disabled state
-                            color: currentZoom <= minZoom ? Colors.grey[400] : Colors.black87,
+                            color: currentZoom <= minZoom ? AppColors.surfaceDim : AppColors.onSurface,
                           ),
                         ),
                       ),
@@ -1366,23 +1491,24 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
 
-            // Loading indicator
+            // THEMED: Loading indicator with AppColors
             if (isLoading)
               Center(
                 child: Container(
                   padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.black45,
+                    color: AppColors.surface.withOpacity(0.9),
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.outline),
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircularProgressIndicator(),
+                      CircularProgressIndicator(color: AppColors.primary),
                       SizedBox(height: 16),
                       Text(
                         'Loading buildings...',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: AppColors.onSurface),
                       ),
                     ],
                   ),
@@ -1413,7 +1539,16 @@ class _MapScreenState extends State<MapScreen> {
                           onBuildingTap: _onBuildingSelected,
                           onVisualizeHistoricalChanges: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Loading historical data...')),
+                              SnackBar(
+                                content: Text(
+                                  'Loading historical data...',
+                                  style: TextStyle(color: AppColors.onSurface),
+                                ),
+                                backgroundColor: AppColors.surfaceContainer,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
                             );
                           },
                         ),
@@ -1423,7 +1558,7 @@ class _MapScreenState extends State<MapScreen> {
                 ),
               ),
 
-            // Selected building info banner
+            // THEMED: Selected building info banner with AppColors
             if (selectedBuilding != null)
               Positioned(
                 bottom: showBottomSheet ? MediaQuery.of(context).size.height * 0.6 + 20 : 20,
@@ -1432,7 +1567,7 @@ class _MapScreenState extends State<MapScreen> {
                 child: Container(
                   padding: EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.red,
+                    color: AppColors.error,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
@@ -1444,7 +1579,7 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.apartment, color: Colors.white, size: 20),
+                      Icon(Icons.apartment, color: AppColors.onError, size: 20),
                       SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -1454,7 +1589,7 @@ class _MapScreenState extends State<MapScreen> {
                             Text(
                               'Selected Building',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: AppColors.onError,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                               ),
@@ -1462,7 +1597,7 @@ class _MapScreenState extends State<MapScreen> {
                             Text(
                               'Area: ${selectedBuilding!.area.toStringAsFixed(0)} m² • Confidence: ${(selectedBuilding!.confidenceScore * 100).toStringAsFixed(0)}%',
                               style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
+                                color: AppColors.onError.withOpacity(0.9),
                                 fontSize: 12,
                               ),
                             ),
@@ -1471,7 +1606,7 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       IconButton(
                         onPressed: _clearBuildingSelection,
-                        icon: Icon(Icons.close, color: Colors.white, size: 18),
+                        icon: Icon(Icons.close, color: AppColors.onError, size: 18),
                         constraints: BoxConstraints(minWidth: 32, minHeight: 32),
                         padding: EdgeInsets.zero,
                       ),

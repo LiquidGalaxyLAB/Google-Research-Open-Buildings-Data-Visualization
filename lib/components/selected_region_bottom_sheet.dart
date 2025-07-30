@@ -6,6 +6,8 @@ import '../models/building_data.dart';
 import '../services/lg_service.dart';
 import '../ui/settings_screen.dart';
 import '../utils/colors.dart';
+import 'package:http/http.dart' as http;
+
 
 
 class SelectedRegionBottomSheet extends StatefulWidget {
@@ -176,7 +178,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
               ),
 
               ElevatedButton.icon(
-                onPressed: lgService.isConnected ? widget.onSendToLiquidGalaxy : () {
+                onPressed: lgService.isConnected ? () => _sendAllBuildingsToLG(lgService) : () {
                   _showConnectionDialog(context);
                 },
                 icon: Icon(Icons.monitor, size: 18),
@@ -362,7 +364,10 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: widget.onVisualizeHistoricalChanges,
+              onPressed: () async {
+                final lgService = Provider.of<LGService>(context, listen: false);
+                await lgService.sendTestKML(1);
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.secondaryContainer,
                 foregroundColor: AppColors.onSecondaryContainer,
@@ -978,7 +983,191 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
 
   }
 
-  // Send individual building to Liquid Galaxy
+  // Add this method to create an info panel for the rightmost screen:
+
+  String _createBuildingInfoPanel(BuildingData building) {
+    final center = _calculateBuildingCenter(building);
+    final plusCode = _generatePlusCode(building);
+
+    // Determine confidence level text and color
+    String confidenceLevel = "High";
+    String confidenceColor = "#4CAF50";
+    if (building.confidenceScore <= 0.5) {
+      confidenceLevel = "Low";
+      confidenceColor = "#F44336";
+    } else if (building.confidenceScore <= 0.8) {
+      confidenceLevel = "Medium";
+      confidenceColor = "#FF9800";
+    }
+
+    return '''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+  <Document id="info_panel">
+    <n>Building Information Panel</n>
+    <ScreenOverlay>
+      <n>Building Info</n>
+      <Icon>
+        <href>data:text/html,
+          <html>
+            <head>
+              <style>
+                body {
+                  font-family: 'Roboto', Arial, sans-serif;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white;
+                  margin: 0;
+                  padding: 20px;
+                  width: 350px;
+                  height: 500px;
+                  box-sizing: border-box;
+                }
+                .header {
+                  text-align: center;
+                  border-bottom: 2px solid rgba(255,255,255,0.3);
+                  padding-bottom: 15px;
+                  margin-bottom: 20px;
+                }
+                .title {
+                  font-size: 24px;
+                  font-weight: bold;
+                  margin: 0;
+                  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                }
+                .subtitle {
+                  font-size: 14px;
+                  opacity: 0.9;
+                  margin: 5px 0 0 0;
+                }
+                .info-grid {
+                  display: grid;
+                  gap: 15px;
+                }
+                .info-card {
+                  background: rgba(255,255,255,0.15);
+                  padding: 15px;
+                  border-radius: 10px;
+                  backdrop-filter: blur(10px);
+                  border: 1px solid rgba(255,255,255,0.2);
+                }
+                .info-label {
+                  font-size: 12px;
+                  opacity: 0.8;
+                  margin-bottom: 5px;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                }
+                .info-value {
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin: 0;
+                }
+                .plus-code {
+                  font-family: 'Courier New', monospace;
+                  font-size: 20px;
+                  background: rgba(0,0,0,0.3);
+                  padding: 8px;
+                  border-radius: 5px;
+                  text-align: center;
+                  letter-spacing: 2px;
+                }
+                .confidence-high { color: #4CAF50; }
+                .confidence-medium { color: #FF9800; }
+                .confidence-low { color: #F44336; }
+                .stats-row {
+                  display: flex;
+                  justify-content: space-between;
+                  margin-top: 10px;
+                }
+                .stat-item {
+                  text-align: center;
+                  flex: 1;
+                }
+                .stat-number {
+                  font-size: 24px;
+                  font-weight: bold;
+                  display: block;
+                }
+                .stat-label {
+                  font-size: 10px;
+                  opacity: 0.8;
+                }
+                .footer {
+                  margin-top: 20px;
+                  text-align: center;
+                  font-size: 11px;
+                  opacity: 0.7;
+                  border-top: 1px solid rgba(255,255,255,0.2);
+                  padding-top: 15px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1 class="title">🏢 Building Analysis</h1>
+                <p class="subtitle">Google Open Buildings Dataset</p>
+              </div>
+              
+              <div class="info-grid">
+                <div class="info-card">
+                  <div class="info-label">Plus Code Location</div>
+                  <div class="plus-code">$plusCode</div>
+                </div>
+                
+                <div class="info-card">
+                  <div class="info-label">Confidence Score</div>
+                  <div class="info-value confidence-${confidenceLevel.toLowerCase()}">
+                    ${(building.confidenceScore * 100).toStringAsFixed(1)}% ($confidenceLevel)
+                  </div>
+                  <div class="stats-row">
+                    <div class="stat-item">
+                      <span class="stat-number">${building.area.toStringAsFixed(0)}</span>
+                      <span class="stat-label">m² AREA</span>
+                    </div>
+                    <div class="stat-item">
+                      <span class="stat-number">${building.polygonPoints.length}</span>
+                      <span class="stat-label">POINTS</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="info-card">
+                  <div class="info-label">Geographic Center</div>
+                  <div class="info-value" style="font-size: 14px;">
+                    📍 ${center.latitude.toStringAsFixed(6)}<br>
+                    📍 ${center.longitude.toStringAsFixed(6)}
+                  </div>
+                </div>
+                
+                <div class="info-card">
+                  <div class="info-label">Building Classification</div>
+                  <div class="info-value">
+                    ${building.area > 1000 ? '🏢 Large Structure' : building.area > 100 ? '🏠 Medium Building' : '🏘️ Small Structure'}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="footer">
+                🌍 Visualized on Liquid Galaxy<br>
+                Data: Google Open Buildings Initiative
+              </div>
+            </body>
+          </html>
+        </href>
+      </Icon>
+      <overlayXY x="1" y="1" xunits="fraction" yunits="fraction"/>
+      <screenXY x="0.98" y="0.98" xunits="fraction" yunits="fraction"/>
+      <size x="0" y="0" xunits="fraction" yunits="fraction"/>
+    </ScreenOverlay>
+  </Document>
+</kml>''';
+  }
+
+// Enhanced method to send building with info panel
+
+
+
+
+
   Future<void> _sendIndividualBuildingToLG(BuildingData building, LGService lgService) async {
     try {
       // Show loading indicator
@@ -997,11 +1186,22 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
         ),
       );
 
-      // Create KML content for the building
+      // Create enhanced building KML with both polygon and marker
       String buildingKML = _createIndividualBuildingKML(building);
 
-      // Send to Liquid Galaxy
-      await lgService.sendKMLToSlave(buildingKML, 2);
+      // Create info panel KML for rightmost screen
+      String infoPanelKML = _createBuildingInfoPanel(building);
+
+      // Get building center coordinates
+      final center = _calculateBuildingCenter(building);
+
+      // Send both the building visualization and info panel
+      await lgService.sendBuildingWithInfoPanel(
+          buildingKML,
+          infoPanelKML,
+          center.latitude,
+          center.longitude
+      );
 
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
@@ -1010,7 +1210,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Building sent to Liquid Galaxy successfully!'),
+            content: Text('Building sent to Liquid Galaxy with info panel!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -1031,7 +1231,541 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
     }
   }
 
+
+
+  // Replace your current _sendAllBuildingsToLG method with:
+  Future<void> _sendAllBuildingsToLG(LGService lgService) async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Fetching KML for ${widget.buildings.length} buildings...'),
+              SizedBox(height: 8),
+              Text(
+                'Loading from server...',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      // Fetch KML from your API for the same region
+      String kmlContent = await _fetchKMLFromAPI();
+
+      // Calculate region center for camera positioning
+      final regionCenter = _calculateRegionCenter();
+
+      // Send the KML content to LG
+      await lgService.sendKMLToLG(
+        kmlContent,
+        regionCenter.latitude,
+        regionCenter.longitude,
+      );
+
+      // Close loading dialog and show success
+      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('🎉 ${widget.buildings.length} buildings sent to Liquid Galaxy!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+    } catch (e) {
+      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to send buildings to LG: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  // Add this method to your SelectedRegionBottomSheet class:
+  Future<String> _fetchKMLFromAPI() async {
+    try {
+      // Use the same API endpoint but request KML format
+      final uri = Uri.parse('https://web-production-928c.up.railway.app/fetch-buildings').replace(
+        queryParameters: {
+          'min_lng': widget.selectedOverlay.bounds.southWest.longitude.toString(),
+          'min_lat': widget.selectedOverlay.bounds.southWest.latitude.toString(),
+          'max_lng': widget.selectedOverlay.bounds.northEast.longitude.toString(),
+          'max_lat': widget.selectedOverlay.bounds.northEast.latitude.toString(),
+          'format': 'kml', // Request KML instead of JSON
+        },
+      );
+
+      print('Fetching KML from: $uri');
+
+      final response = await http.get(uri).timeout(
+        const Duration(seconds: 45),
+        onTimeout: () => throw Exception('Request timeout'),
+      );
+
+      if (response.statusCode == 200) {
+        print('✅ KML data fetched: ${response.body.length} characters');
+
+        if (response.body.isEmpty || response.body.trim() == '') {
+          throw Exception('Empty KML response from API');
+        }
+
+        return response.body;
+      } else {
+        throw Exception('API Error: ${response.statusCode} - ${response.body}');
+      }
+
+    } catch (e) {
+      print('❌ Error fetching KML: $e');
+      rethrow;
+    }
+  }
+
+// Add this helper method to calculate region center:
+  LatLng _calculateRegionCenter() {
+    final bounds = widget.selectedOverlay.bounds;
+    final centerLat = (bounds.northEast.latitude + bounds.southWest.latitude) / 2;
+    final centerLng = (bounds.northEast.longitude + bounds.southWest.longitude) / 2;
+    return LatLng(centerLat, centerLng);
+  }
+
+  // Add this method to create the rightmost screen info panel:
+
+  String _createRightmostInfoPanel(List<BuildingData> buildings, {BuildingData? selectedBuilding}) {
+    // Calculate statistics
+    final totalBuildings = buildings.length;
+    final averageArea = _getAverageArea();
+    final averageConfidence = _getAverageConfidence();
+    final regionArea = _getRegionArea();
+    final buildingDensity = _getBuildingDensity();
+
+    // If a specific building is selected, show its details
+    String selectedBuildingInfo = '';
+    if (selectedBuilding != null) {
+      final center = _calculateBuildingCenter(selectedBuilding);
+      final plusCode = _generatePlusCode(selectedBuilding);
+
+      selectedBuildingInfo = '''
+      <div class="selected-building">
+        <div class="selected-header">🎯 Selected Building</div>
+        <div class="selected-content">
+          <div class="plus-code">${plusCode}</div>
+          <div class="building-stats">
+            <div class="stat-row">
+              <span class="stat-label">Area:</span>
+              <span class="stat-value">${selectedBuilding.area.toStringAsFixed(0)} m²</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Confidence:</span>
+              <span class="stat-value confidence-${selectedBuilding.confidenceScore > 0.8 ? 'high' : selectedBuilding.confidenceScore > 0.5 ? 'medium' : 'low'}">${(selectedBuilding.confidenceScore * 100).toStringAsFixed(1)}%</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Complexity:</span>
+              <span class="stat-value">${selectedBuilding.polygonPoints.length} points</span>
+            </div>
+            <div class="stat-row">
+              <span class="stat-label">Center:</span>
+              <span class="stat-value coordinates">${center.latitude.toStringAsFixed(6)}, ${center.longitude.toStringAsFixed(6)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    ''';
+    }
+
+    return '''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
+  <Document id="building_info_panel">
+    <name>Building Information Panel</name>
+    <ScreenOverlay>
+      <name>Building Info</name>
+      <Icon>
+        <href>data:text/html,
+          <html>
+            <head>
+              <style>
+                body {
+                  font-family: 'Segoe UI', Arial, sans-serif;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white;
+                  margin: 0;
+                  padding: 20px;
+                  width: 350px;
+                  height: 600px;
+                  box-sizing: border-box;
+                  overflow-y: auto;
+                }
+                
+                .header {
+                  text-align: center;
+                  border-bottom: 2px solid rgba(255,255,255,0.3);
+                  padding-bottom: 15px;
+                  margin-bottom: 20px;
+                }
+                
+                .title {
+                  font-size: 22px;
+                  font-weight: bold;
+                  margin: 0;
+                  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                }
+                
+                .subtitle {
+                  font-size: 12px;
+                  opacity: 0.9;
+                  margin: 5px 0 0 0;
+                }
+                
+                .selected-building {
+                  background: rgba(255,255,255,0.2);
+                  border-radius: 12px;
+                  padding: 15px;
+                  margin-bottom: 20px;
+                  border: 2px solid rgba(255,255,255,0.3);
+                  animation: pulse 2s infinite;
+                }
+                
+                @keyframes pulse {
+                  0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+                  70% { box-shadow: 0 0 0 10px rgba(255,255,255,0); }
+                  100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+                }
+                
+                .selected-header {
+                  font-size: 16px;
+                  font-weight: bold;
+                  margin-bottom: 10px;
+                  text-align: center;
+                }
+                
+                .plus-code {
+                  font-family: 'Courier New', monospace;
+                  font-size: 18px;
+                  background: rgba(0,0,0,0.3);
+                  padding: 8px;
+                  border-radius: 6px;
+                  text-align: center;
+                  margin-bottom: 15px;
+                  letter-spacing: 2px;
+                  border: 1px solid rgba(255,255,255,0.2);
+                }
+                
+                .stat-row {
+                  display: flex;
+                  justify-content: space-between;
+                  margin: 8px 0;
+                  padding: 5px 0;
+                  border-bottom: 1px solid rgba(255,255,255,0.1);
+                }
+                
+                .stat-label {
+                  font-size: 12px;
+                  opacity: 0.8;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                }
+                
+                .stat-value {
+                  font-weight: bold;
+                  font-size: 13px;
+                }
+                
+                .coordinates {
+                  font-family: 'Courier New', monospace;
+                  font-size: 11px;
+                }
+                
+                .confidence-high { color: #4CAF50; }
+                .confidence-medium { color: #FF9800; }
+                .confidence-low { color: #F44336; }
+                
+                .stats-grid {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr;
+                  gap: 12px;
+                  margin-bottom: 20px;
+                }
+                
+                .stat-card {
+                  background: rgba(255,255,255,0.15);
+                  padding: 12px;
+                  border-radius: 8px;
+                  text-align: center;
+                  border: 1px solid rgba(255,255,255,0.2);
+                }
+                
+                .stat-number {
+                  font-size: 20px;
+                  font-weight: bold;
+                  display: block;
+                  margin-bottom: 5px;
+                }
+                
+                .stat-label-card {
+                  font-size: 10px;
+                  opacity: 0.8;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                }
+                
+                .info-section {
+                  background: rgba(255,255,255,0.1);
+                  padding: 15px;
+                  border-radius: 8px;
+                  margin-bottom: 15px;
+                  border: 1px solid rgba(255,255,255,0.2);
+                }
+                
+                .section-title {
+                  font-size: 14px;
+                  font-weight: bold;
+                  margin-bottom: 10px;
+                  text-align: center;
+                  color: #FFE082;
+                }
+                
+                .footer {
+                  text-align: center;
+                  font-size: 10px;
+                  opacity: 0.7;
+                  margin-top: 20px;
+                  padding-top: 15px;
+                  border-top: 1px solid rgba(255,255,255,0.2);
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1 class="title">🏙️ Building Analysis</h1>
+                <p class="subtitle">Region Overview & Selection</p>
+              </div>
+              
+              ${selectedBuildingInfo.isNotEmpty ? selectedBuildingInfo : '<div class="info-section"><div class="section-title">📍 Click a building to view details</div><p style="text-align: center; opacity: 0.7; font-size: 12px;">Select any building polygon to see detailed information here</p></div>'}
+              
+              <div class="info-section">
+                <div class="section-title">📊 Regional Statistics</div>
+                <div class="stats-grid">
+                  <div class="stat-card">
+                    <span class="stat-number">$totalBuildings</span>
+                    <span class="stat-label-card">Total Buildings</span>
+                  </div>
+                  <div class="stat-card">
+                    <span class="stat-number">${averageArea.toStringAsFixed(0)}</span>
+                    <span class="stat-label-card">Avg Area (m²)</span>
+                  </div>
+                  <div class="stat-card">
+                    <span class="stat-number">${averageConfidence.toStringAsFixed(1)}%</span>
+                    <span class="stat-label-card">Avg Confidence</span>
+                  </div>
+                  <div class="stat-card">
+                    <span class="stat-number">${buildingDensity.toStringAsFixed(1)}</span>
+                    <span class="stat-label-card">Buildings/km²</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="info-section">
+                <div class="section-title">🌍 Coverage Details</div>
+                <div class="stat-row">
+                  <span class="stat-label">Region Size</span>
+                  <span class="stat-value">${regionArea.toStringAsFixed(2)} km²</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Data Source</span>
+                  <span class="stat-value">Google Open Buildings</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Building Density</span>
+                  <span class="stat-value">${buildingDensity.toStringAsFixed(1)}/km²</span>
+                </div>
+              </div>
+              
+              <div class="footer">
+                🌍 Visualized on Liquid Galaxy<br>
+                📊 Live Building Data Analysis
+              </div>
+            </body>
+          </html>
+        </href>
+      </Icon>
+      <overlayXY x="1" y="1" xunits="fraction" yunits="fraction"/>
+      <screenXY x="0.98" y="0.98" xunits="fraction" yunits="fraction"/>
+      <size x="0" y="0" xunits="fraction" yunits="fraction"/>
+    </ScreenOverlay>
+  </Document>
+</kml>''';
+  }
+
+
+  // Add these methods to your SelectedRegionBottomSheet class:
+
+// Create KML for all buildings in the region
+  // Replace your _createBulkBuildingsKML method with this fixed version:
+
+  String _createBulkBuildingsKML(List<BuildingData> buildings) {
+    final StringBuffer kmlBuffer = StringBuffer();
+
+    // KML Header
+    kmlBuffer.write('''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document id="bulk_buildings_${DateTime.now().millisecondsSinceEpoch}">
+    <name>Regional Building Analysis</name>
+    <description>
+      <![CDATA[
+        <h3>📊 Regional Building Footprints</h3>
+        <p><strong>Total Buildings:</strong> ${buildings.length}</p>
+        <p><strong>Average Area:</strong> ${_getAverageArea().toStringAsFixed(0)} m²</p>
+        <p><strong>Data Source:</strong> Google Open Buildings</p>
+      ]]>
+    </description>
+    <open>1</open>
+    
+    <!-- FIXED: Shared Styles with Proper Colors -->
+    <Style id="building_high_confidence">
+      <LineStyle>
+        <color>ff00ff00</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>4d00ff00</color>
+        <fill>1</fill>
+        <outline>1</outline>
+      </PolyStyle>
+    </Style>
+    
+    <Style id="building_medium_confidence">
+      <LineStyle>
+        <color>ff00aaff</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>4d00aaff</color>
+        <fill>1</fill>
+        <outline>1</outline>
+      </PolyStyle>
+    </Style>
+    
+    <Style id="building_low_confidence">
+      <LineStyle>
+        <color>ff0000ff</color>
+        <width>2</width>
+      </LineStyle>
+      <PolyStyle>
+        <color>4d0000ff</color>
+        <fill>1</fill>
+        <outline>1</outline>
+      </PolyStyle>
+    </Style>
+    
+    <!-- High Confidence Buildings Folder -->
+    <Folder>
+      <name>🟢 High Confidence Buildings (>80%)</name>
+      <open>1</open>
+''');
+
+    // Group buildings by confidence for better organization
+    final highConfidenceBuildings = buildings.where((b) => b.confidenceScore > 0.8).toList();
+    final mediumConfidenceBuildings = buildings.where((b) => b.confidenceScore > 0.5 && b.confidenceScore <= 0.8).toList();
+    final lowConfidenceBuildings = buildings.where((b) => b.confidenceScore <= 0.5).toList();
+
+    // Add high confidence buildings
+    for (int i = 0; i < highConfidenceBuildings.length; i++) {
+      kmlBuffer.write(_createBuildingPlacemark(highConfidenceBuildings[i], i + 1, 'building_high_confidence'));
+    }
+
+    kmlBuffer.write('''
+    </Folder>
+    
+    <!-- Medium Confidence Buildings Folder -->
+    <Folder>
+      <name>🟡 Medium Confidence Buildings (50-80%)</name>
+      <open>0</open>
+''');
+
+    // Add medium confidence buildings
+    for (int i = 0; i < mediumConfidenceBuildings.length; i++) {
+      kmlBuffer.write(_createBuildingPlacemark(mediumConfidenceBuildings[i], i + 1, 'building_medium_confidence'));
+    }
+
+    kmlBuffer.write('''
+    </Folder>
+    
+    <!-- Low Confidence Buildings Folder -->
+    <Folder>
+      <name>🔴 Low Confidence Buildings (<50%)</name>
+      <open>0</open>
+''');
+
+    // Add low confidence buildings
+    for (int i = 0; i < lowConfidenceBuildings.length; i++) {
+      kmlBuffer.write(_createBuildingPlacemark(lowConfidenceBuildings[i], i + 1, 'building_low_confidence'));
+    }
+
+    kmlBuffer.write('''
+    </Folder>
+  </Document>
+</kml>''');
+
+    return kmlBuffer.toString();
+  }
+
+// Create a single building placemark (optimized for bulk operations)
+  String _createBuildingPlacemark(BuildingData building, int index, String styleId) {
+    final center = _calculateBuildingCenter(building);
+    final plusCode = _generatePlusCode(building);
+
+    // Create coordinates string for the polygon
+    String coordinates = building.polygonPoints
+        .map((point) => '${point.longitude},${point.latitude},0')
+        .join(' ');
+
+    // Close the polygon
+    if (building.polygonPoints.isNotEmpty) {
+      final firstPoint = building.polygonPoints.first;
+      coordinates += ' ${firstPoint.longitude},${firstPoint.latitude},0';
+    }
+
+    return '''
+      <Placemark>
+        <name>$plusCode</name>
+        <description>
+          <![CDATA[
+            <table style="font-family: Arial; font-size: 12px;">
+              <tr><td><b>Plus Code:</b></td><td>$plusCode</td></tr>
+              <tr><td><b>Area:</b></td><td>${building.area.toStringAsFixed(0)} m²</td></tr>
+              <tr><td><b>Confidence:</b></td><td>${(building.confidenceScore * 100).toStringAsFixed(1)}%</td></tr>
+              <tr><td><b>Points:</b></td><td>${building.polygonPoints.length}</td></tr>
+            </table>
+          ]]>
+        </description>
+        <styleUrl>#$styleId</styleUrl>
+        <Polygon>
+          <extrude>0</extrude>
+          <altitudeMode>clampToGround</altitudeMode>
+          <outerBoundaryIs>
+            <LinearRing>
+              <coordinates>$coordinates</coordinates>
+            </LinearRing>
+          </outerBoundaryIs>
+        </Polygon>
+      </Placemark>
+''';
+  }
+
   // Create KML for individual building
+
   String _createIndividualBuildingKML(BuildingData building) {
     final center = _calculateBuildingCenter(building);
     final plusCode = _generatePlusCode(building);
@@ -1047,58 +1781,100 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
       coordinates += ' ${firstPoint.longitude},${firstPoint.latitude},0';
     }
 
-    String placemark = '''
-      <Placemark>
-        <name>Building: $plusCode</name>
-        <description>
-          <![CDATA[
-            <b>Building Information:</b><br/>
-            Plus Code: $plusCode<br/>
-            Area: ${building.area.toStringAsFixed(0)} m²<br/>
-            Confidence Score: ${(building.confidenceScore * 100).toStringAsFixed(1)}%<br/>
-            Number of Points: ${building.polygonPoints.length}<br/>
-            Center: ${center.latitude.toStringAsFixed(6)}, ${center.longitude.toStringAsFixed(6)}
-          ]]>
-        </description>
-        <Style>
-          <LineStyle>
-            <color>ff0000ff</color>
-            <width>3</width>
-          </LineStyle>
-          <PolyStyle>
-            <color>7f0000ff</color>
-          </PolyStyle>
-        </Style>
-        <Polygon>
-          <extrude>1</extrude>
-          <altitudeMode>clampToGround</altitudeMode>
-          <outerBoundaryIs>
-            <LinearRing>
-              <coordinates>$coordinates</coordinates>
-            </LinearRing>
-          </outerBoundaryIs>
-        </Polygon>
-        <LookAt>
-          <longitude>${center.longitude}</longitude>
-          <latitude>${center.latitude}</latitude>
-          <altitude>0</altitude>
-          <heading>0</heading>
-          <tilt>45</tilt>
-          <range>300</range>
-          <gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
-        </LookAt>
-      </Placemark>
-    ''';
+    // Determine confidence color
+    String confidenceColor = 'ff00ff00'; // Green for high confidence
+    String markerIcon = 'http://maps.google.com/mapfiles/kml/paddle/grn-circle.png';
+    if (building.confidenceScore <= 0.5) {
+      confidenceColor = 'ff0000ff'; // Red for low confidence
+      markerIcon = 'http://maps.google.com/mapfiles/kml/paddle/red-circle.png';
+    } else if (building.confidenceScore <= 0.8) {
+      confidenceColor = 'ff00aaff'; // Orange for medium confidence
+      markerIcon = 'http://maps.google.com/mapfiles/kml/paddle/orange-circle.png';
+    }
+
+    // Create the main building placemark with polygon
+    String buildingPlacemark = '''
+    <Placemark>
+      <name>Building: $plusCode</name>
+      <description>
+        <![CDATA[
+          <div style="font-family: Arial, sans-serif; width: 300px;">
+            <h3 style="color: #1976d2; margin: 0;">🏢 Building Information</h3>
+            <hr style="margin: 10px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr><td style="font-weight: bold; color: #666;">Plus Code:</td><td style="font-family: monospace; color: #1976d2;">$plusCode</td></tr>
+              <tr><td style="font-weight: bold; color: #666;">Area:</td><td>${building.area.toStringAsFixed(0)} m²</td></tr>
+              <tr><td style="font-weight: bold; color: #666;">Confidence:</td><td style="color: ${building.confidenceScore > 0.8 ? 'green' : building.confidenceScore > 0.5 ? 'orange' : 'red'}; font-weight: bold;">${(building.confidenceScore * 100).toStringAsFixed(1)}%</td></tr>
+              <tr><td style="font-weight: bold; color: #666;">Complexity:</td><td>${building.polygonPoints.length} points</td></tr>
+              <tr><td style="font-weight: bold; color: #666;">Center:</td><td>${center.latitude.toStringAsFixed(6)}, ${center.longitude.toStringAsFixed(6)}</td></tr>
+            </table>
+            <hr style="margin: 10px 0;">
+            <p style="font-size: 12px; color: #888; margin: 5px 0;">📊 Data from Google Open Buildings</p>
+          </div>
+        ]]>
+      </description>
+      <Style>
+        <LineStyle>
+          <color>$confidenceColor</color>
+          <width>3</width>
+        </LineStyle>
+        <PolyStyle>
+          <color>4d${confidenceColor.substring(2)}</color>
+          <fill>1</fill>
+          <outline>1</outline>
+        </PolyStyle>
+      </Style>
+      <Polygon>
+        <extrude>1</extrude>
+        <altitudeMode>clampToGround</altitudeMode>
+        <outerBoundaryIs>
+          <LinearRing>
+            <coordinates>$coordinates</coordinates>
+          </LinearRing>
+        </outerBoundaryIs>
+      </Polygon>
+    </Placemark>
+  ''';
+
+    // Create the center marker
+    String centerMarker = '''
+    <Placemark>
+      <name>📍 $plusCode</name>
+      <description>
+        <![CDATA[
+          <h4>Building Center Point</h4>
+          <p><strong>Plus Code:</strong> $plusCode</p>
+          <p><strong>Confidence:</strong> ${(building.confidenceScore * 100).toStringAsFixed(1)}%</p>
+        ]]>
+      </description>
+      <Style>
+        <IconStyle>
+          <Icon>
+            <href>$markerIcon</href>
+          </Icon>
+          <scale>1.2</scale>
+        </IconStyle>
+        <LabelStyle>
+          <color>ffffffff</color>
+          <scale>0.8</scale>
+        </LabelStyle>
+      </Style>
+      <Point>
+        <coordinates>${center.longitude},${center.latitude},0</coordinates>
+      </Point>
+    </Placemark>
+  ''';
 
     return '''<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
-  <Document id="slave_2">
-    <name>Individual Building: $plusCode</name>
+  <Document id="building_${DateTime.now().millisecondsSinceEpoch}">
+    <name>Building: $plusCode</name>
     <open>1</open>
     <Folder>
-      <name>Selected Building</name>
+      <name>Building Visualization</name>
       <open>1</open>
-      $placemark
+      $buildingPlacemark
+      $centerMarker
     </Folder>
   </Document>
 </kml>''';

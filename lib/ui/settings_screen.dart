@@ -1,4 +1,4 @@
-// ui/settings_screen.dart
+// ui/settings_screen.dart - THEMED VERSION WITH APP COLORS
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -7,8 +7,11 @@ import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import '../utils/colors.dart';
 import '../services/lg_service.dart';
+
+
+
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -16,16 +19,20 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
+        backgroundColor: AppColors.primary,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: AppColors.onPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Settings',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            color: AppColors.onPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       body: ListView(
@@ -81,9 +88,12 @@ class SettingsScreen extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: Colors.grey[700]),
-      title: Text(title),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+      leading: Icon(icon, color: AppColors.onSurfaceVariant),
+      title: Text(
+        title,
+        style: TextStyle(color: AppColors.onSurface),
+      ),
+      trailing: Icon(Icons.chevron_right, color: AppColors.outline),
       onTap: onTap,
     );
   }
@@ -137,22 +147,26 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
+        backgroundColor: AppColors.primary,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: AppColors.onPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Liquid Galaxy Configuration',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            color: AppColors.onPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: Colors.blue,
-          labelColor: Colors.blue,
-          unselectedLabelColor: Colors.grey,
+          indicatorColor: AppColors.onPrimary,
+          labelColor: AppColors.onPrimary,
+          unselectedLabelColor: AppColors.onPrimary.withOpacity(0.7),
           tabs: const [Tab(text: 'Connection'), Tab(text: 'Liquid Galaxy')],
         ),
       ),
@@ -183,20 +197,27 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
               label: const Text('Scan QR Code'),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(50),
-                backgroundColor: Colors.blue[600],
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               onPressed: _scanQRCode,
             ),
 
             const SizedBox(height: 16),
-            const Divider(),
+            Divider(color: AppColors.outline),
             const SizedBox(height: 16),
 
             // Manual entry section
-            const Text(
+            Text(
               'Or enter manually:',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.onSurface,
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -228,7 +249,9 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
               obscureText: _obscurePassword,
               suffixIcon: IconButton(
                 icon: Icon(
-                    _obscurePassword ? Icons.visibility : Icons.visibility_off),
+                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  color: AppColors.onSurfaceVariant,
+                ),
                 onPressed: () =>
                     setState(() => _obscurePassword = !_obscurePassword),
               ),
@@ -238,18 +261,23 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
               builder: (context, lgService, child) {
                 return ElevatedButton.icon(
                   icon: lgService.isConnecting
-                      ? const SizedBox(
+                      ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.onPrimary),
                     ),
                   )
                       : const Icon(Icons.connect_without_contact),
                   label: Text(lgService.isConnecting ? 'Connecting...' : 'Connect'),
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(50),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   onPressed: lgService.isConnecting ? null : _connectToLiquidGalaxy,
                 );
@@ -276,57 +304,66 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
               _buildActionButton(
                 'SET SLAVES REFRESH',
                 lgService.isConnected ? () async {
-                  await _executeAction('Setting slaves refresh...', lgService.setSlavesRefresh);
+                  if (await showConfirmationDialog(context, 'Are you sure you want to set slaves refresh?')) {
+                    await _executeAction('Setting slaves refresh...', lgService.setSlavesRefresh);
+                  }
                 } : null,
               ),
 
-              // Reset Slaves Refresh
               _buildActionButton(
                 'RESET SLAVES REFRESH',
                 lgService.isConnected ? () async {
-                  await _executeAction('Resetting slaves refresh...', lgService.resetSlavesRefresh);
+                  if (await showConfirmationDialog(context, 'Are you sure you want to reset slaves refresh?')) {
+                    await _executeAction('Resetting slaves refresh...', lgService.resetSlavesRefresh);
+                  }
                 } : null,
               ),
 
-              // Clear KML + Logos
               _buildActionButton(
                 'CLEAR KML + LOGOS',
                 lgService.isConnected ? () async {
-                  await _executeAction('Clearing KML and logos...', lgService.clearKMLAndLogos);
+                  if (await showConfirmationDialog(context, 'Are you sure you want to clear KML and logos?')) {
+                    await _executeAction('Clearing KML and logos...', lgService.clearKMLAndLogos);
+                  }
                 } : null,
               ),
 
-              // Relaunch
               _buildActionButton(
                 'RELAUNCH',
                 lgService.isConnected ? () async {
-                  await _executeAction('Relaunching LG...', lgService.relaunchLG);
+                  if (await showConfirmationDialog(context, 'Are you sure you want to relaunch LG?')) {
+                    await _executeAction('Relaunching LG...', lgService.relaunchLG);
+                  }
                 } : null,
               ),
 
-              // Reboot
               _buildActionButton(
                 'REBOOT',
                 lgService.isConnected ? () async {
-                  await _executeAction('Rebooting LG...', lgService.rebootLG);
+                  if (await showConfirmationDialog(context, 'Are you sure you want to reboot LG?')) {
+                    await _executeAction('Rebooting LG...', lgService.rebootLG);
+                  }
                 } : null,
               ),
 
-              // Power Off
               _buildActionButton(
                 'POWER OFF',
                 lgService.isConnected ? () async {
-                  await _executeAction('Powering off LG...', lgService.powerOffLG);
+                  if (await showConfirmationDialog(context, 'Are you sure you want to power off LG?')) {
+                    await _executeAction('Powering off LG...', lgService.powerOffLG);
+                  }
                 } : null,
               ),
 
               if (!lgService.isConnected)
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
                   child: Text(
                     'Connect to Liquid Galaxy first to enable these actions.',
                     style: TextStyle(
-                        color: Colors.grey, fontStyle: FontStyle.italic),
+                      color: AppColors.onSurfaceVariant,
+                      fontStyle: FontStyle.italic,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -344,12 +381,16 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: AppColors.surface,
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const CircularProgressIndicator(),
+              CircularProgressIndicator(color: AppColors.primary),
               const SizedBox(width: 16),
-              Text(message),
+              Text(
+                message,
+                style: TextStyle(color: AppColors.onSurface),
+              ),
             ],
           ),
         );
@@ -365,9 +406,15 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Action completed successfully!'),
+          SnackBar(
+            content: Text(
+              'Action completed successfully!',
+              style: TextStyle(color: AppColors.onPrimary),
+            ),
             backgroundColor: Colors.green,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -379,8 +426,14 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Action failed: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              'Action failed: ${e.toString()}',
+              style: TextStyle(color: AppColors.onError),
+            ),
+            backgroundColor: AppColors.error,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -394,8 +447,11 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           minimumSize: const Size.fromHeight(48),
-          backgroundColor: onPressed != null ? null : Colors.grey[300],
-          foregroundColor: onPressed != null ? null : Colors.grey[600],
+          backgroundColor: onPressed != null ? AppColors.primary : AppColors.surfaceDim,
+          foregroundColor: onPressed != null ? AppColors.onPrimary : AppColors.onSurfaceVariant,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
         child: Text(text),
       ),
@@ -407,8 +463,14 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
       builder: (context, lgService, child) {
         return Row(
           children: [
-            const Text('Connection Status',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+            Text(
+              'Connection Status',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.onSurface,
+              ),
+            ),
             const Spacer(),
             GestureDetector(
               onTap: () async {
@@ -419,7 +481,13 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
                 label: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(_getStatusText(lgService.status)),
+                    Text(
+                      _getStatusText(lgService.status),
+                      style: TextStyle(
+                        color: _getStatusColor(lgService.status),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     const SizedBox(width: 4),
                     Icon(
                       Icons.refresh,
@@ -462,25 +530,60 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
       case LGConnectionStatus.connecting:
         return Colors.orange;
       case LGConnectionStatus.error:
-        return Colors.red;
+        return AppColors.error;
       case LGConnectionStatus.disconnected:
       default:
-        return Colors.grey;
+        return AppColors.outline;
     }
   }
 
   Color _getStatusBackgroundColor(LGConnectionStatus status) {
     switch (status) {
       case LGConnectionStatus.connected:
-        return Colors.green[100]!;
+        return Colors.green.withOpacity(0.1);
       case LGConnectionStatus.connecting:
-        return Colors.orange[100]!;
+        return Colors.orange.withOpacity(0.1);
       case LGConnectionStatus.error:
-        return Colors.red[100]!;
+        return AppColors.errorContainer;
       case LGConnectionStatus.disconnected:
       default:
-        return Colors.grey[100]!;
+        return AppColors.surfaceContainer;
     }
+  }
+
+  Future<bool> showConfirmationDialog(BuildContext context, String message) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'Confirm Action',
+          style: TextStyle(color: AppColors.onSurface),
+        ),
+        content: Text(
+          message,
+          style: TextStyle(color: AppColors.onSurface),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.onSurfaceVariant),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.onPrimary,
+            ),
+            child: const Text('Yes'),
+          ),
+        ],
+      ),
+    );
+    return result == true;
   }
 
   Widget _buildTextField({
@@ -498,9 +601,22 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
         controller: controller,
         keyboardType: keyboardType,
         obscureText: isPassword ? obscureText : false,
+        style: TextStyle(color: AppColors.onSurface),
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8.0)),
+          labelStyle: TextStyle(color: AppColors.onSurfaceVariant),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide(color: AppColors.outline),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide(color: AppColors.outline),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide(color: AppColors.primary, width: 2),
+          ),
           suffixIcon: suffixIcon,
         ),
         validator: validator,
@@ -560,18 +676,26 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text(
+          backgroundColor: AppColors.surface,
+          title: Text(
             'QR Code Scanned Successfully',
-            style: TextStyle(fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppColors.onSurface,
+            ),
           ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'The following credentials were found:',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 _buildCredentialRow(
@@ -588,9 +712,12 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
                         : 'Not provided'
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Do you want to proceed with connecting to Liquid Galaxy using these credentials?',
-                  style: TextStyle(fontSize: 14),
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.onSurface,
+                  ),
                 ),
               ],
             ),
@@ -600,13 +727,20 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
               onPressed: () {
                 Navigator.of(context).pop(); // Just close dialog
               },
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.onSurfaceVariant),
+              ),
             ),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _applyCredentialsAndConnect(credentials);
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.onPrimary,
+              ),
               child: const Text('Connect'),
             ),
           ],
@@ -625,16 +759,19 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
             width: 80,
             child: Text(
               '$label:',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w500,
-                color: Colors.grey,
+                color: AppColors.onSurfaceVariant,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w400),
+              style: TextStyle(
+                fontWeight: FontWeight.w400,
+                color: AppColors.onSurface,
+              ),
             ),
           ),
         ],
@@ -674,16 +811,28 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
     if (mounted) {
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Successfully connected to Liquid Galaxy! Logo displayed.'),
+          SnackBar(
+            content: Text(
+              'Successfully connected to Liquid Galaxy! Logo displayed.',
+              style: TextStyle(color: AppColors.onPrimary),
+            ),
             backgroundColor: Colors.green,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Connection failed: ${lgService.errorMessage ?? 'Unknown error'}'),
-            backgroundColor: Colors.red,
+            content: Text(
+              'Connection failed: ${lgService.errorMessage ?? 'Unknown error'}',
+              style: TextStyle(color: AppColors.onError),
+            ),
+            backgroundColor: AppColors.error,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -718,7 +867,16 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         Navigator.of(context).pop(map); // send back parsed JSON
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid QR JSON data')),
+          SnackBar(
+            content: Text(
+              'Invalid QR JSON data',
+              style: TextStyle(color: AppColors.onError),
+            ),
+            backgroundColor: AppColors.error,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
         );
       }
     });
@@ -727,17 +885,27 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Scan QR Code'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
+        title: Text(
+          'Scan QR Code',
+          style: TextStyle(
+            color: AppColors.onPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: AppColors.primary,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: AppColors.onPrimary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
       body: QRView(
         key: qrKey,
         onQRViewCreated: _onQRViewCreated,
         overlay: QrScannerOverlayShape(
-          borderColor: Colors.blue,
+          borderColor: AppColors.primary,
           borderRadius: 10,
           borderLength: 30,
           borderWidth: 10,
@@ -783,16 +951,20 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
+        backgroundColor: AppColors.primary,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: AppColors.onPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Visualization Settings',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            color: AppColors.onPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       body: Padding(
@@ -814,7 +986,7 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
             const SizedBox(height: 16),
 
             Card(
-              color: Colors.blue.shade50,
+              color: AppColors.primaryContainer.withOpacity(0.1),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -825,7 +997,7 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
                   children: [
                     Icon(
                       Icons.info_outline,
-                      color: Colors.blue.shade700,
+                      color: AppColors.primary,
                       size: 28,
                     ),
                     const SizedBox(width: 12),
@@ -834,7 +1006,7 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
                         "Set the minimum confidence threshold for visualizing buildings retrieved from the API. "
                             "Lower thresholds show more buildings, but may include less accurate results.",
                         style: TextStyle(
-                          color: Colors.blue.shade900,
+                          color: AppColors.onSurface,
                           fontSize: 14,
                         ),
                       ),
@@ -858,18 +1030,20 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16.0,
                   fontWeight: FontWeight.w400,
+                  color: AppColors.onSurface,
                 ),
               ),
             ),
             const SizedBox(width: 8.0),
             Text(
               '${value.toInt()}%',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16.0,
                 fontWeight: FontWeight.w500,
+                color: AppColors.onSurface,
               ),
             ),
           ],
@@ -878,10 +1052,10 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
           padding: const EdgeInsets.only(top: 8.0),
           child: SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: Colors.blue,
-              inactiveTrackColor: Colors.grey[300],
-              thumbColor: Colors.blue,
-              overlayColor: Colors.blue.withOpacity(0.2),
+              activeTrackColor: AppColors.primary,
+              inactiveTrackColor: AppColors.outlineVariant,
+              thumbColor: AppColors.primary,
+              overlayColor: AppColors.primary.withOpacity(0.2),
             ),
             child: Slider(
               value: value,
@@ -931,16 +1105,20 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
+        backgroundColor: AppColors.primary,
+        elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: AppColors.onPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Data Settings',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            color: AppColors.onPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       body: Padding(
@@ -971,15 +1149,19 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16.0,
             fontWeight: FontWeight.w400,
+            color: AppColors.onSurface,
           ),
         ),
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Colors.blue,
+          activeColor: AppColors.primary,
+          activeTrackColor: AppColors.primary.withOpacity(0.3),
+          inactiveThumbColor: AppColors.outline,
+          inactiveTrackColor: AppColors.outlineVariant,
         ),
       ],
     );
@@ -991,21 +1173,22 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16.0,
             fontWeight: FontWeight.w400,
+            color: AppColors.onSurface,
           ),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
+            color: AppColors.primary.withOpacity(0.1),
             borderRadius: BorderRadius.circular(16.0),
           ),
           child: Text(
             value,
-            style: const TextStyle(
-              color: Colors.blue,
+            style: TextStyle(
+              color: AppColors.primary,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -1038,24 +1221,22 @@ class _AboutScreenState extends State<AboutScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
+      backgroundColor: AppColors.background,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
         child: AppBar(
           elevation: 0,
           backgroundColor: Colors.transparent,
           leading: IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.arrow_back_rounded,
               size: 30.0,
-              color: Colors.black,
+              color: AppColors.onBackground,
             ),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
       ),
-      backgroundColor: _isDarkMode
-          ? const Color.fromARGB(255, 16, 16, 16)
-          : const Color.fromARGB(255, 245, 245, 245),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
@@ -1072,7 +1253,7 @@ class _AboutScreenState extends State<AboutScreen> {
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 36,
-                    color: _isDarkMode ? Colors.white : Colors.black,
+                    color: AppColors.onBackground,
                   ),
                 ),
               ),
@@ -1085,13 +1266,9 @@ class _AboutScreenState extends State<AboutScreen> {
                   height: 180,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: Colors.blue.withOpacity(0.1),
+                    color: AppColors.primary.withOpacity(0.1),
                   ),
-                  child: Icon(
-                    Icons.apartment,
-                    size: 100,
-                    color: Colors.blue[600],
-                  ),
+                  child: Image.asset('assets/logos/logo.png')
                 ),
               ),
 
@@ -1102,7 +1279,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 24,
-                  color: _isDarkMode ? Colors.white : Colors.black,
+                  color: AppColors.onBackground,
                 ),
               ),
 
@@ -1114,7 +1291,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
-                  color: _isDarkMode ? Colors.grey[300] : Colors.grey[600],
+                  color: AppColors.onSurfaceVariant,
                   height: 1.4,
                 ),
               ),
@@ -1138,18 +1315,17 @@ class _AboutScreenState extends State<AboutScreen> {
 
               // Placeholder for splash image
               Container(
-                height: 200,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  color: Colors.blue.withOpacity(0.1),
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: Icon(
-                  Icons.map,
-                  size: 80,
-                  color: Colors.blue[600],
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset('assets/images/splash_kml.png'),
                 ),
               ),
+
 
               const SizedBox(height: 30),
 
@@ -1169,7 +1345,7 @@ class _AboutScreenState extends State<AboutScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 10),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _isDarkMode ? Colors.grey[800] : Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
@@ -1182,11 +1358,11 @@ class _AboutScreenState extends State<AboutScreen> {
       child: Column(
         children: [
           _buildInfoRow('Version', '1.0.0', Icons.info_outline),
-          const Divider(height: 20),
+          Divider(height: 20, color: AppColors.outline),
           _buildInfoRow('Data Source', 'Google Open Buildings V3', Icons.dataset),
-          const Divider(height: 20),
+          Divider(height: 20, color: AppColors.outline),
           _buildInfoRow('Project', 'GSoC 2025 - Liquid Galaxy', Icons.code),
-          const Divider(height: 20),
+          Divider(height: 20, color: AppColors.outline),
           _buildInfoRow('Build Date', 'January 2025', Icons.calendar_today),
         ],
       ),
@@ -1199,7 +1375,7 @@ class _AboutScreenState extends State<AboutScreen> {
         Icon(
           icon,
           size: 20,
-          color: _isDarkMode ? Colors.blue[300] : Colors.blue[600],
+          color: AppColors.primary,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -1210,7 +1386,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 label,
                 style: TextStyle(
                   fontSize: 14,
-                  color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                  color: AppColors.onSurfaceVariant,
                 ),
               ),
               Text(
@@ -1218,7 +1394,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: _isDarkMode ? Colors.white : Colors.black,
+                  color: AppColors.onSurface,
                 ),
               ),
             ],
@@ -1233,7 +1409,7 @@ class _AboutScreenState extends State<AboutScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 10),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _isDarkMode ? Colors.grey[800] : Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
@@ -1250,7 +1426,7 @@ class _AboutScreenState extends State<AboutScreen> {
             children: [
               Icon(
                 Icons.person,
-                color: _isDarkMode ? Colors.blue[300] : Colors.blue[600],
+                color: AppColors.primary,
               ),
               const SizedBox(width: 8),
               Text(
@@ -1258,7 +1434,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: _isDarkMode ? Colors.white : Colors.black,
+                  color: AppColors.onSurface,
                 ),
               ),
             ],
@@ -1269,7 +1445,7 @@ class _AboutScreenState extends State<AboutScreen> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: _isDarkMode ? Colors.white : Colors.black,
+              color: AppColors.onSurface,
             ),
           ),
           const SizedBox(height: 5),
@@ -1277,7 +1453,7 @@ class _AboutScreenState extends State<AboutScreen> {
             'VNIT Nagpur, India',
             style: TextStyle(
               fontSize: 14,
-              color: _isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              color: AppColors.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 15),
@@ -1300,9 +1476,9 @@ class _AboutScreenState extends State<AboutScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.blue.withOpacity(0.1),
+          color: AppColors.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1310,14 +1486,14 @@ class _AboutScreenState extends State<AboutScreen> {
             Icon(
               icon,
               size: 16,
-              color: Colors.blue[600],
+              color: AppColors.primary,
             ),
             const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.blue[600],
+                color: AppColors.primary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -1332,7 +1508,7 @@ class _AboutScreenState extends State<AboutScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 10),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _isDarkMode ? Colors.grey[800] : Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
@@ -1349,7 +1525,7 @@ class _AboutScreenState extends State<AboutScreen> {
             children: [
               Icon(
                 Icons.info_outline,
-                color: _isDarkMode ? Colors.blue[300] : Colors.blue[600],
+                color: AppColors.primary,
               ),
               const SizedBox(width: 8),
               Text(
@@ -1357,7 +1533,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: _isDarkMode ? Colors.white : Colors.black,
+                  color: AppColors.onSurface,
                 ),
               ),
             ],
@@ -1367,7 +1543,7 @@ class _AboutScreenState extends State<AboutScreen> {
             'This application integrates Google\'s Open Buildings dataset with interactive mapping capabilities and Liquid Galaxy visualization. Built as part of Google Summer of Code 2025 with the Liquid Galaxy organization.',
             style: TextStyle(
               fontSize: 14,
-              color: _isDarkMode ? Colors.grey[300] : Colors.grey[700],
+              color: AppColors.onSurfaceVariant,
               height: 1.5,
             ),
           ),
@@ -1395,7 +1571,7 @@ class _AboutScreenState extends State<AboutScreen> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: _isDarkMode ? Colors.white : Colors.black,
+            color: AppColors.onSurface,
           ),
         ),
         const SizedBox(height: 10),
@@ -1407,7 +1583,7 @@ class _AboutScreenState extends State<AboutScreen> {
               Icon(
                 Icons.check_circle,
                 size: 16,
-                color: Colors.green[600],
+                color: Colors.green,
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -1415,7 +1591,7 @@ class _AboutScreenState extends State<AboutScreen> {
                   feature,
                   style: TextStyle(
                     fontSize: 14,
-                    color: _isDarkMode ? Colors.grey[300] : Colors.grey[700],
+                    color: AppColors.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -1436,8 +1612,8 @@ class _AboutScreenState extends State<AboutScreen> {
             icon: const Icon(Icons.open_in_new, size: 20),
             label: const Text('View Project Repository'),
             style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: Colors.blue[600],
+              foregroundColor: AppColors.onPrimary,
+              backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
@@ -1454,8 +1630,8 @@ class _AboutScreenState extends State<AboutScreen> {
                 icon: const Icon(Icons.dataset, size: 18),
                 label: const Text('Open Buildings Dataset'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.blue[600],
-                  side: BorderSide(color: Colors.blue[600]!),
+                  foregroundColor: AppColors.primary,
+                  side: BorderSide(color: AppColors.primary),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -1470,8 +1646,8 @@ class _AboutScreenState extends State<AboutScreen> {
                 icon: const Icon(Icons.public, size: 18),
                 label: const Text('Liquid Galaxy'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.blue[600],
-                  side: BorderSide(color: Colors.blue[600]!),
+                  foregroundColor: AppColors.primary,
+                  side: BorderSide(color: AppColors.primary),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
