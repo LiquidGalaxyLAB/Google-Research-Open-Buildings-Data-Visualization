@@ -11,8 +11,6 @@ import '../utils/colors.dart';
 import '../services/lg_service.dart';
 
 
-
-
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
 
