@@ -8,8 +8,6 @@ import 'l10n/app_localizations.dart';
 import 'ui/map_screen.dart';
 import 'services/lg_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
-// ADD THESE NEW IMPORTS:
 import 'providers/language_provider.dart';
 
 void main() async {
