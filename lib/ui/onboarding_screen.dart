@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
+import '../l10n/app_localizations.dart';
 import '../utils/colors.dart';
 
 
@@ -17,26 +18,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   PageController _pageController = PageController();
   int currentIndex = 0;
 
-  final List<OnboardingData> onboardingPages = [
-    OnboardingData(
-      title: "Liquid Galaxy Integration",
-      description: "Send building data to Liquid Galaxy for immersive visualization experience",
-      imagePath: "assets/logos/lg_logo.png",
-    ),
-    OnboardingData(
-      title: "Liquid Galaxy Open Buildings Explorer",
-      description: "Explore building footprints across the globe with interactive visualization",
-      imagePath: "assets/logos/gsoc_logo.png",
-    ),
-    OnboardingData(
-      title: "Interactive Map",
-      description: "Select regions to visualize building density and footprints in real-time",
-      imagePath: "assets/logos/logo.png",
-    ),
-  ];
+  // CHANGED: Make this a getter that uses localized strings
+  List<OnboardingData> get onboardingPages {
+    final localizations = AppLocalizations.of(context)!;
+    return [
+      OnboardingData(
+        title: localizations.onboarding_lg_integration_title,      // CHANGED: Localized
+        description: localizations.onboarding_lg_integration_description,  // CHANGED: Localized
+        imagePath: "assets/logos/lg_logo.png",
+      ),
+      OnboardingData(
+        title: localizations.onboarding_explorer_title,           // CHANGED: Localized
+        description: localizations.onboarding_explorer_description,     // CHANGED: Localized
+        imagePath: "assets/logos/gsoc_logo.png",
+      ),
+      OnboardingData(
+        title: localizations.onboarding_interactive_map_title,    // CHANGED: Localized
+        description: localizations.onboarding_interactive_map_description,  // CHANGED: Localized
+        imagePath: "assets/logos/logo.png",
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
     final screenSize = MediaQuery.of(context).size;
     final screenHeight = screenSize.height;
     final screenWidth = screenSize.width;
@@ -115,8 +121,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                       child: Text(
                         currentIndex == onboardingPages.length - 1
-                            ? "Get Started"
-                            : "Next",
+                            ? localizations.onboarding_get_started  // CHANGED: Localized
+                            : localizations.onboarding_next,       // CHANGED: Localized
                         style: TextStyle(
                           fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.w600,
@@ -126,8 +132,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
 
                   SizedBox(height: screenHeight * 0.025),
-
-
                 ],
               ),
             ),
@@ -147,7 +151,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 }
-
 // Individual Onboarding Page Widget
 class OnboardingPage extends StatelessWidget {
   final OnboardingData data;

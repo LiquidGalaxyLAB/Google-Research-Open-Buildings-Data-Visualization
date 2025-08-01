@@ -1,0 +1,652 @@
+{
+  "@@locale": "en",
+
+  "help_title": "Help",
+  "@help_title": {
+    "description": "Help screen title"
+  },
+  "help_app_title": "Open Buildings Explorer",
+  "@help_app_title": {
+    "description": "Application title shown in help screen"
+  },
+  "help_app_description": "Explore building footprints across the globe with Liquid Galaxy integration",
+  "@help_app_description": {
+    "description": "Application description in help screen"
+  },
+  "help_step1_title": "Select Map Area",
+  "@help_step1_title": {
+    "description": "Title for help step 1"
+  },
+  "help_step1_description": "Use the controls on the right side of the map to modify and select the area of tiles you want to explore.",
+  "@help_step1_description": {
+    "description": "Description for help step 1"
+  },
+  "help_step2_title": "Choose a Tile",
+  "@help_step2_title": {
+    "description": "Title for help step 2"
+  },
+  "help_step2_description": "Click on a specific tile within your selected area to fetch building data from the Open Buildings dataset.",
+  "@help_step2_description": {
+    "description": "Description for help step 2"
+  },
+  "help_step3_title": "View Results",
+  "@help_step3_title": {
+    "description": "Title for help step 3"
+  },
+  "help_step3_description": "Once data is fetched, a bottom sheet will appear showing the results. You can send all data to Liquid Galaxy for visualization.",
+  "@help_step3_description": {
+    "description": "Description for help step 3"
+  },
+  "help_step4_title": "Explore Buildings",
+  "@help_step4_title": {
+    "description": "Title for help step 4"
+  },
+  "help_step4_description": "Switch to the Buildings tab to see individual building details, including plus codes and confidence scores.",
+  "@help_step4_description": {
+    "description": "Description for help step 4"
+  },
+  "help_confidence_title": "About Confidence Scores",
+  "@help_confidence_title": {
+    "description": "Title for confidence scores info section"
+  },
+  "help_confidence_description": "Each building shows a confidence score that indicates how reliable the data from the Open Buildings dataset is for that particular structure.",
+  "@help_confidence_description": {
+    "description": "Description explaining confidence scores"
+  },
+
+  "onboarding_lg_integration_title": "Liquid Galaxy Integration",
+  "@onboarding_lg_integration_title": {
+    "description": "Title for Liquid Galaxy integration onboarding page"
+  },
+  "onboarding_lg_integration_description": "Send building data to Liquid Galaxy for immersive visualization experience",
+  "@onboarding_lg_integration_description": {
+    "description": "Description for Liquid Galaxy integration onboarding page"
+  },
+  "onboarding_explorer_title": "Liquid Galaxy Open Buildings Explorer",
+  "@onboarding_explorer_title": {
+    "description": "Title for main app explorer onboarding page"
+  },
+  "onboarding_explorer_description": "Explore building footprints across the globe with interactive visualization",
+  "@onboarding_explorer_description": {
+    "description": "Description for main app explorer onboarding page"
+  },
+  "onboarding_interactive_map_title": "Interactive Map",
+  "@onboarding_interactive_map_title": {
+    "description": "Title for interactive map onboarding page"
+  },
+  "onboarding_interactive_map_description": "Select regions to visualize building density and footprints in real-time",
+  "@onboarding_interactive_map_description": {
+    "description": "Description for interactive map onboarding page"
+  },
+  "onboarding_get_started": "Get Started",
+  "@onboarding_get_started": {
+    "description": "Button text to complete onboarding"
+  },
+  "onboarding_next": "Next",
+  "@onboarding_next": {
+    "description": "Button text to go to next onboarding page"
+  },
+
+  "map_title": "Open Buildings",
+  "@map_title": {
+    "description": "Map screen title"
+  },
+  "map_clear_selection_tooltip": "Clear building selection",
+  "@map_clear_selection_tooltip": {
+    "description": "Tooltip for clear selection button"
+  },
+  "map_search_hint": "Search for a location",
+  "@map_search_hint": {
+    "description": "Search field hint text"
+  },
+  "map_searching": "Searching...",
+  "@map_searching": {
+    "description": "Search progress indicator text"
+  },
+  "map_search_no_results": "No results found",
+  "@map_search_no_results": {
+    "description": "Message when search returns no results"
+  },
+  "map_search_failed": "Search failed. Please try again.",
+  "@map_search_failed": {
+    "description": "Error message when search fails"
+  },
+  "map_overlay_size_label": "Overlay Size",
+  "@map_overlay_size_label": {
+    "description": "Label for overlay size control"
+  },
+  "map_loading_buildings": "Loading buildings...",
+  "@map_loading_buildings": {
+    "description": "Loading message when fetching building data"
+  },
+  "map_building_details_title": "Building Details",
+  "@map_building_details_title": {
+    "description": "Title for building details dialog"
+  },
+  "map_building_area_label": "Area:",
+  "@map_building_area_label": {
+    "description": "Label for building area information"
+  },
+  "map_building_confidence_label": "Confidence:",
+  "@map_building_confidence_label": {
+    "description": "Label for building confidence score"
+  },
+  "map_building_points_label": "Points:",
+  "@map_building_points_label": {
+    "description": "Label for building polygon points count"
+  },
+  "map_building_center_label": "Center:",
+  "@map_building_center_label": {
+    "description": "Label for building center coordinates"
+  },
+  "map_building_close": "Close",
+  "@map_building_close": {
+    "description": "Close button for building details dialog"
+  },
+  "map_building_send_to_lg": "Send to LG",
+  "@map_building_send_to_lg": {
+    "description": "Button to send building to Liquid Galaxy"
+  },
+  "map_lg_connected": "LG Connected",
+  "@map_lg_connected": {
+    "description": "Connection status when LG is connected"
+  },
+  "map_lg_disconnected": "LG Disconnected",
+  "@map_lg_disconnected": {
+    "description": "Connection status when LG is disconnected"
+  },
+  "map_sending_building_to_lg": "Sending to Liquid Galaxy...",
+  "@map_sending_building_to_lg": {
+    "description": "Progress message when sending building to LG"
+  },
+  "map_sending_region_to_lg": "Sending region to Liquid Galaxy...",
+  "@map_sending_region_to_lg": {
+    "description": "Progress message when sending region to LG"
+  },
+  "map_building_sent_success": "Building sent to Liquid Galaxy successfully!",
+  "@map_building_sent_success": {
+    "description": "Success message when building is sent to LG"
+  },
+  "map_region_sent_success": "Region with {count} buildings sent to Liquid Galaxy!",
+  "@map_region_sent_success": {
+    "description": "Success message when region is sent to LG",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "25"
+      }
+    }
+  },
+  "map_building_send_failed": "Failed to send building to LG: {error}",
+  "@map_building_send_failed": {
+    "description": "Error message when building send fails",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Connection timeout"
+      }
+    }
+  },
+  "map_region_send_failed": "Failed to send region to LG: {error}",
+  "@map_region_send_failed": {
+    "description": "Error message when region send fails",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Connection timeout"
+      }
+    }
+  },
+  "map_buildings_load_failed": "Failed to load buildings: {error}",
+  "@map_buildings_load_failed": {
+    "description": "Error message when building loading fails",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Network error"
+      }
+    }
+  },
+  "map_connect_lg_first": "Please connect to Liquid Galaxy first",
+  "@map_connect_lg_first": {
+    "description": "Message when LG connection is required"
+  },
+  "map_connect_action": "Connect",
+  "@map_connect_action": {
+    "description": "Action button to connect to LG"
+  },
+  "map_zoom_out_limit": "Maximum zoom out reached ({zoom}x)",
+  "@map_zoom_out_limit": {
+    "description": "Message when zoom out limit is reached",
+    "placeholders": {
+      "zoom": {
+        "type": "String",
+        "example": "12"
+      }
+    }
+  },
+  "map_zoom_in_limit": "Maximum zoom in reached ({zoom}x)",
+  "@map_zoom_in_limit": {
+    "description": "Message when zoom in limit is reached",
+    "placeholders": {
+      "zoom": {
+        "type": "String",
+        "example": "16"
+      }
+    }
+  },
+  "map_selected_building_title": "Selected Building",
+  "@map_selected_building_title": {
+    "description": "Title for selected building banner"
+  },
+  "map_selected_building_info": "Area: {area} m² • Confidence: {confidence}%",
+  "@map_selected_building_info": {
+    "description": "Information shown for selected building",
+    "placeholders": {
+      "area": {
+        "type": "String",
+        "example": "150"
+      },
+      "confidence": {
+        "type": "String",
+        "example": "85"
+      }
+    }
+  },
+  "map_loading_historical_data": "Loading historical data...",
+  "@map_loading_historical_data": {
+    "description": "Message when loading historical data"
+  },
+
+  "settings_title": "Settings",
+  "@settings_title": {
+    "description": "Settings screen title"
+  },
+  "settings_lg_configuration": "Liquid Galaxy Configuration",
+  "@settings_lg_configuration": {
+    "description": "Liquid Galaxy configuration settings menu item"
+  },
+  "settings_visualization": "Visualization Settings",
+  "@settings_visualization": {
+    "description": "Visualization settings menu item"
+  },
+  "settings_data": "Data Settings",
+  "@settings_data": {
+    "description": "Data settings menu item"
+  },
+  "settings_about": "About",
+  "@settings_about": {
+    "description": "About settings menu item"
+  },
+
+  "lg_config_title": "Liquid Galaxy Configuration",
+  "@lg_config_title": {
+    "description": "Liquid Galaxy configuration screen title"
+  },
+  "lg_config_connection_tab": "Connection",
+  "@lg_config_connection_tab": {
+    "description": "Connection tab label"
+  },
+  "lg_config_lg_tab": "Liquid Galaxy",
+  "@lg_config_lg_tab": {
+    "description": "Liquid Galaxy tab label"
+  },
+  "lg_config_scan_qr": "Scan QR Code",
+  "@lg_config_scan_qr": {
+    "description": "Scan QR code button text"
+  },
+  "lg_config_manual_entry": "Or enter manually:",
+  "@lg_config_manual_entry": {
+    "description": "Manual entry section header"
+  },
+  "lg_config_ip_address": "IP Address",
+  "@lg_config_ip_address": {
+    "description": "IP address field label"
+  },
+  "lg_config_port": "Port",
+  "@lg_config_port": {
+    "description": "Port field label"
+  },
+  "lg_config_rigs": "Rigs",
+  "@lg_config_rigs": {
+    "description": "Rigs field label"
+  },
+  "lg_config_username": "Username",
+  "@lg_config_username": {
+    "description": "Username field label"
+  },
+  "lg_config_password": "Password",
+  "@lg_config_password": {
+    "description": "Password field label"
+  },
+  "lg_config_connecting": "Connecting...",
+  "@lg_config_connecting": {
+    "description": "Connecting button state text"
+  },
+  "lg_config_connect": "Connect",
+  "@lg_config_connect": {
+    "description": "Connect button text"
+  },
+  "lg_config_connection_status": "Connection Status",
+  "@lg_config_connection_status": {
+    "description": "Connection status label"
+  },
+  "lg_config_connect_first_message": "Connect to Liquid Galaxy first to enable these actions.",
+  "@lg_config_connect_first_message": {
+    "description": "Message shown when not connected to LG"
+  },
+
+  "lg_action_set_slaves_refresh": "SET SLAVES REFRESH",
+  "@lg_action_set_slaves_refresh": {
+    "description": "Set slaves refresh action button"
+  },
+  "lg_action_reset_slaves_refresh": "RESET SLAVES REFRESH",
+  "@lg_action_reset_slaves_refresh": {
+    "description": "Reset slaves refresh action button"
+  },
+  "lg_action_clear_kml_logos": "CLEAR KML + LOGOS",
+  "@lg_action_clear_kml_logos": {
+    "description": "Clear KML and logos action button"
+  },
+  "lg_action_relaunch": "RELAUNCH",
+  "@lg_action_relaunch": {
+    "description": "Relaunch LG action button"
+  },
+  "lg_action_reboot": "REBOOT",
+  "@lg_action_reboot": {
+    "description": "Reboot LG action button"
+  },
+  "lg_action_power_off": "POWER OFF",
+  "@lg_action_power_off": {
+    "description": "Power off LG action button"
+  },
+
+  "lg_status_connected": "Connected",
+  "@lg_status_connected": {
+    "description": "Connected status text"
+  },
+  "lg_status_connecting": "Connecting...",
+  "@lg_status_connecting": {
+    "description": "Connecting status text"
+  },
+  "lg_status_error": "Error",
+  "@lg_status_error": {
+    "description": "Error status text"
+  },
+  "lg_status_disconnected": "Disconnected",
+  "@lg_status_disconnected": {
+    "description": "Disconnected status text"
+  },
+
+  "lg_confirm_title": "Confirm Action",
+  "@lg_confirm_title": {
+    "description": "Confirmation dialog title"
+  },
+  "lg_confirm_cancel": "Cancel",
+  "@lg_confirm_cancel": {
+    "description": "Cancel button in confirmation dialog"
+  },
+  "lg_confirm_yes": "Yes",
+  "@lg_confirm_yes": {
+    "description": "Yes button in confirmation dialog"
+  },
+  "lg_confirm_set_slaves_refresh": "Are you sure you want to set slaves refresh?",
+  "@lg_confirm_set_slaves_refresh": {
+    "description": "Confirmation message for set slaves refresh"
+  },
+  "lg_confirm_reset_slaves_refresh": "Are you sure you want to reset slaves refresh?",
+  "@lg_confirm_reset_slaves_refresh": {
+    "description": "Confirmation message for reset slaves refresh"
+  },
+  "lg_confirm_clear_kml_logos": "Are you sure you want to clear KML and logos?",
+  "@lg_confirm_clear_kml_logos": {
+    "description": "Confirmation message for clear KML and logos"
+  },
+  "lg_confirm_relaunch": "Are you sure you want to relaunch LG?",
+  "@lg_confirm_relaunch": {
+    "description": "Confirmation message for relaunch LG"
+  },
+  "lg_confirm_reboot": "Are you sure you want to reboot LG?",
+  "@lg_confirm_reboot": {
+    "description": "Confirmation message for reboot LG"
+  },
+  "lg_confirm_power_off": "Are you sure you want to power off LG?",
+  "@lg_confirm_power_off": {
+    "description": "Confirmation message for power off LG"
+  },
+
+  "lg_action_setting_slaves_refresh": "Setting slaves refresh...",
+  "@lg_action_setting_slaves_refresh": {
+    "description": "Progress message for setting slaves refresh"
+  },
+  "lg_action_resetting_slaves_refresh": "Resetting slaves refresh...",
+  "@lg_action_resetting_slaves_refresh": {
+    "description": "Progress message for resetting slaves refresh"
+  },
+  "lg_action_clearing_kml_logos": "Clearing KML and logos...",
+  "@lg_action_clearing_kml_logos": {
+    "description": "Progress message for clearing KML and logos"
+  },
+  "lg_action_relaunching": "Relaunching LG...",
+  "@lg_action_relaunching": {
+    "description": "Progress message for relaunching LG"
+  },
+  "lg_action_rebooting": "Rebooting LG...",
+  "@lg_action_rebooting": {
+    "description": "Progress message for rebooting LG"
+  },
+  "lg_action_powering_off": "Powering off LG...",
+  "@lg_action_powering_off": {
+    "description": "Progress message for powering off LG"
+  },
+  "lg_action_success": "Action completed successfully!",
+  "@lg_action_success": {
+    "description": "Success message for completed actions"
+  },
+  "lg_action_failed": "Action failed: {error}",
+  "@lg_action_failed": {
+    "description": "Error message for failed actions",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Connection timeout"
+      }
+    }
+  },
+
+  "form_required": "Required",
+  "@form_required": {
+    "description": "Required field validation message"
+  },
+  "form_invalid_ip": "Invalid IP",
+  "@form_invalid_ip": {
+    "description": "Invalid IP address validation message"
+  },
+  "form_invalid_number": "Invalid number",
+  "@form_invalid_number": {
+    "description": "Invalid number validation message"
+  },
+
+  "qr_scan_title": "Scan QR Code",
+  "@qr_scan_title": {
+    "description": "QR scanner screen title"
+  },
+  "qr_invalid_data": "Invalid QR JSON data",
+  "@qr_invalid_data": {
+    "description": "Error message for invalid QR data"
+  },
+  "qr_scanned_success_title": "QR Code Scanned Successfully",
+  "@qr_scanned_success_title": {
+    "description": "Title for successful QR scan dialog"
+  },
+  "qr_credentials_found": "The following credentials were found:",
+  "@qr_credentials_found": {
+    "description": "Message showing QR scan results"
+  },
+  "qr_proceed_question": "Do you want to proceed with connecting to Liquid Galaxy using these credentials?",
+  "@qr_proceed_question": {
+    "description": "Confirmation question for QR scanned credentials"
+  },
+  "qr_connect_button": "Connect",
+  "@qr_connect_button": {
+    "description": "Connect button in QR confirmation dialog"
+  },
+
+  "lg_connection_success": "Successfully connected to Liquid Galaxy! Logo displayed.",
+  "@lg_connection_success": {
+    "description": "Success message for LG connection"
+  },
+  "lg_connection_failed": "Connection failed: {error}",
+  "@lg_connection_failed": {
+    "description": "Error message for LG connection failure",
+    "placeholders": {
+      "error": {
+        "type": "String",
+        "example": "Network timeout"
+      }
+    }
+  },
+
+  "viz_settings_title": "Visualization Settings",
+  "@viz_settings_title": {
+    "description": "Visualization settings screen title"
+  },
+  "viz_confidence_threshold": "Confidence Threshold",
+  "@viz_confidence_threshold": {
+    "description": "Label for confidence threshold setting"
+  },
+  "viz_threshold_info": "Set the minimum confidence threshold for visualizing buildings retrieved from the API. Lower thresholds show more buildings, but may include less accurate results.",
+  "@viz_threshold_info": {
+    "description": "Information text about confidence threshold"
+  },
+
+  "data_settings_title": "Data Settings",
+  "@data_settings_title": {
+    "description": "Data settings screen title"
+  },
+  "data_source_version": "Data Source Version",
+  "@data_source_version": {
+    "description": "Label for data source version"
+  },
+  "data_visualization_mode": "Visualization Mode (Hybrid/Dark)",
+  "@data_visualization_mode": {
+    "description": "Label for visualization mode setting"
+  },
+  "data_version_v3_2025": "V3 (2025)",
+  "@data_version_v3_2025": {
+    "description": "Data version identifier"
+  },
+
+  "about_title": "About",
+  "@about_title": {
+    "description": "About screen title"
+  },
+  "about_app_title": "Open Buildings Dataset Tool",
+  "@about_app_title": {
+    "description": "Application title in about screen"
+  },
+  "about_app_description": "Interactive visualization tool for Google's Open Buildings dataset\nwith Liquid Galaxy integration",
+  "@about_app_description": {
+    "description": "Application description in about screen"
+  },
+  "about_version": "Version",
+  "@about_version": {
+    "description": "Version label in about screen"
+  },
+  "about_version_number": "1.0.0",
+  "@about_version_number": {
+    "description": "Application version number"
+  },
+  "about_data_source": "Data Source",
+  "@about_data_source": {
+    "description": "Data source label in about screen"
+  },
+  "about_data_source_value": "Google Open Buildings V3",
+  "@about_data_source_value": {
+    "description": "Data source value in about screen"
+  },
+  "about_project": "Project",
+  "@about_project": {
+    "description": "Project label in about screen"
+  },
+  "about_project_value": "GSoC 2025 - Liquid Galaxy",
+  "@about_project_value": {
+    "description": "Project value in about screen"
+  },
+  "about_build_date": "Build Date",
+  "@about_build_date": {
+    "description": "Build date label in about screen"
+  },
+  "about_build_date_value": "January 2025",
+  "@about_build_date_value": {
+    "description": "Build date value in about screen"
+  },
+  "about_developer": "Developer",
+  "@about_developer": {
+    "description": "Developer label in about screen"
+  },
+  "about_developer_name": "Jaivardhan Shukla",
+  "@about_developer_name": {
+    "description": "Developer name in about screen"
+  },
+  "about_developer_location": "VNIT Nagpur, India",
+  "@about_developer_location": {
+    "description": "Developer location in about screen"
+  },
+  "about_github": "GitHub",
+  "@about_github": {
+    "description": "GitHub social link label"
+  },
+  "about_linkedin": "LinkedIn",
+  "@about_linkedin": {
+    "description": "LinkedIn social link label"
+  },
+  "about_email": "Email",
+  "@about_email": {
+    "description": "Email social link label"
+  },
+  "about_project_details": "About this Project",
+  "@about_project_details": {
+    "description": "Project details section title"
+  },
+  "about_project_description": "This application integrates Google's Open Buildings dataset with interactive mapping capabilities and Liquid Galaxy visualization. Built as part of Google Summer of Code 2025 with the Liquid Galaxy organization.",
+  "@about_project_description": {
+    "description": "Detailed project description"
+  },
+  "about_key_features": "Key Features:",
+  "@about_key_features": {
+    "description": "Key features section title"
+  },
+  "about_feature_1": "Interactive building footprint visualization",
+  "@about_feature_1": {
+    "description": "First key feature description"
+  },
+  "about_feature_2": "Real-time data from Google Earth Engine",
+  "@about_feature_2": {
+    "description": "Second key feature description"
+  },
+  "about_feature_3": "Liquid Galaxy integration for immersive experience",
+  "@about_feature_3": {
+    "description": "Third key feature description"
+  },
+  "about_feature_4": "Grid-based mapping with zoom controls",
+  "@about_feature_4": {
+    "description": "Fourth key feature description"
+  },
+  "about_feature_5": "Building confidence score visualization",
+  "@about_feature_5": {
+    "description": "Fifth key feature description"
+  },
+  "about_view_repository": "View Project Repository",
+  "@about_view_repository": {
+    "description": "Button text to view project repository"
+  },
+  "about_open_buildings_dataset": "Open Buildings Dataset",
+  "@about_open_buildings_dataset": {
+    "description": "Button text for Open Buildings dataset link"
+  },
+  "about_liquid_galaxy": "Liquid Galaxy",
+  "@about_liquid_galaxy": {
+    "description": "Button text for Liquid Galaxy link"
+  }
+}

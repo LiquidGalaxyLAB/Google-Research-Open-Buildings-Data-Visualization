@@ -1,4 +1,4 @@
-// ui/settings_screen.dart - THEMED VERSION WITH APP COLORS
+// ui/settings_screen.dart - FULLY LOCALIZED VERSION
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -7,15 +7,22 @@ import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+// CORRECTED IMPORT PATH:
+
+import '../components/language_selector.dart';
+import '../l10n/app_localizations.dart';
 import '../utils/colors.dart';
 import '../services/lg_service.dart';
-
+import '../providers/language_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -26,7 +33,7 @@ class SettingsScreen extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Settings',
+          localizations.settings_title,  // CHANGED: 'Settings' → localized
           style: TextStyle(
             color: AppColors.onPrimary,
             fontWeight: FontWeight.w600,
@@ -35,9 +42,16 @@ class SettingsScreen extends StatelessWidget {
       ),
       body: ListView(
         children: [
+          // ADD THIS: Language selector at the top
+          const LanguageSelector(),
+
+          // ADD THIS: Visual separator
+          Divider(color: AppColors.outline),
+
+          // CHANGED: All hardcoded strings → localized
           _buildSettingsItem(
             icon: Icons.settings_applications_outlined,
-            title: 'Liquid Galaxy Configuration',
+            title: localizations.settings_lg_configuration,  // CHANGED
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -47,7 +61,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           _buildSettingsItem(
             icon: Icons.visibility_outlined,
-            title: 'Visualization Settings',
+            title: localizations.settings_visualization,  // CHANGED
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -57,7 +71,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           _buildSettingsItem(
             icon: Icons.data_usage_outlined,
-            title: 'Data Settings',
+            title: localizations.settings_data,  // CHANGED
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -67,7 +81,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           _buildSettingsItem(
             icon: Icons.info_outline,
-            title: 'About',
+            title: localizations.settings_about,  // CHANGED
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(
@@ -144,6 +158,8 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -154,7 +170,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Liquid Galaxy Configuration',
+          localizations.lg_config_title,  // CHANGED: 'Liquid Galaxy Configuration' → localized
           style: TextStyle(
             color: AppColors.onPrimary,
             fontWeight: FontWeight.w600,
@@ -165,7 +181,10 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
           indicatorColor: AppColors.onPrimary,
           labelColor: AppColors.onPrimary,
           unselectedLabelColor: AppColors.onPrimary.withOpacity(0.7),
-          tabs: const [Tab(text: 'Connection'), Tab(text: 'Liquid Galaxy')],
+          tabs: [
+            Tab(text: localizations.lg_config_connection_tab),  // CHANGED: 'Connection' → localized
+            Tab(text: localizations.lg_config_lg_tab),          // CHANGED: 'Liquid Galaxy' → localized
+          ],
         ),
       ),
       body: TabBarView(
@@ -179,6 +198,8 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   }
 
   Widget _buildConnectionTab() {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Form(
@@ -192,7 +213,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
             // QR Scan Button
             ElevatedButton.icon(
               icon: const Icon(Icons.qr_code_scanner),
-              label: const Text('Scan QR Code'),
+              label: Text(localizations.lg_config_scan_qr),  // CHANGED: 'Scan QR Code' → localized
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size.fromHeight(50),
                 backgroundColor: AppColors.primary,
@@ -210,7 +231,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
 
             // Manual entry section
             Text(
-              'Or enter manually:',
+              localizations.lg_config_manual_entry,  // CHANGED: 'Or enter manually:' → localized
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -220,28 +241,28 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
             const SizedBox(height: 16),
 
             _buildTextField(
-              label: 'IP Address',
+              label: localizations.lg_config_ip_address,  // CHANGED: 'IP Address' → localized
               controller: _ipController,
               validator: _validateIP,
             ),
             _buildTextField(
-              label: 'Port',
+              label: localizations.lg_config_port,  // CHANGED: 'Port' → localized
               controller: _portController,
               keyboardType: TextInputType.number,
               validator: _validateNumber,
             ),
             _buildTextField(
-              label: 'Rigs',
+              label: localizations.lg_config_rigs,  // CHANGED: 'Rigs' → localized
               controller: _rigsController,
               keyboardType: TextInputType.number,
               validator: _validateNumber,
             ),
             _buildTextField(
-              label: 'Username',
+              label: localizations.lg_config_username,  // CHANGED: 'Username' → localized
               controller: _usernameController,
             ),
             _buildTextField(
-              label: 'Password',
+              label: localizations.lg_config_password,  // CHANGED: 'Password' → localized
               controller: _passwordController,
               isPassword: true,
               obscureText: _obscurePassword,
@@ -268,7 +289,9 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
                     ),
                   )
                       : const Icon(Icons.connect_without_contact),
-                  label: Text(lgService.isConnecting ? 'Connecting...' : 'Connect'),
+                  label: Text(lgService.isConnecting
+                      ? localizations.lg_config_connecting     // CHANGED: 'Connecting...' → localized
+                      : localizations.lg_config_connect),     // CHANGED: 'Connect' → localized
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(50),
                     backgroundColor: AppColors.primary,
@@ -288,6 +311,8 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   }
 
   Widget _buildLiquidGalaxyTab() {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Consumer<LGService>(
@@ -300,55 +325,55 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
 
               // Set Slaves Refresh
               _buildActionButton(
-                'SET SLAVES REFRESH',
+                localizations.lg_action_set_slaves_refresh,  // CHANGED: Localized
                 lgService.isConnected ? () async {
-                  if (await showConfirmationDialog(context, 'Are you sure you want to set slaves refresh?')) {
-                    await _executeAction('Setting slaves refresh...', lgService.setSlavesRefresh);
+                  if (await showConfirmationDialog(context, localizations.lg_confirm_set_slaves_refresh)) {  // CHANGED: Localized
+                    await _executeAction(localizations.lg_action_setting_slaves_refresh, lgService.setSlavesRefresh);  // CHANGED: Localized
                   }
                 } : null,
               ),
 
               _buildActionButton(
-                'RESET SLAVES REFRESH',
+                localizations.lg_action_reset_slaves_refresh,  // CHANGED: Localized
                 lgService.isConnected ? () async {
-                  if (await showConfirmationDialog(context, 'Are you sure you want to reset slaves refresh?')) {
-                    await _executeAction('Resetting slaves refresh...', lgService.resetSlavesRefresh);
+                  if (await showConfirmationDialog(context, localizations.lg_confirm_reset_slaves_refresh)) {  // CHANGED: Localized
+                    await _executeAction(localizations.lg_action_resetting_slaves_refresh, lgService.resetSlavesRefresh);  // CHANGED: Localized
                   }
                 } : null,
               ),
 
               _buildActionButton(
-                'CLEAR KML + LOGOS',
+                localizations.lg_action_clear_kml_logos,  // CHANGED: Localized
                 lgService.isConnected ? () async {
-                  if (await showConfirmationDialog(context, 'Are you sure you want to clear KML and logos?')) {
-                    await _executeAction('Clearing KML and logos...', lgService.clearKMLAndLogos);
+                  if (await showConfirmationDialog(context, localizations.lg_confirm_clear_kml_logos)) {  // CHANGED: Localized
+                    await _executeAction(localizations.lg_action_clearing_kml_logos, lgService.clearKMLAndLogos);  // CHANGED: Localized
                   }
                 } : null,
               ),
 
               _buildActionButton(
-                'RELAUNCH',
+                localizations.lg_action_relaunch,  // CHANGED: Localized
                 lgService.isConnected ? () async {
-                  if (await showConfirmationDialog(context, 'Are you sure you want to relaunch LG?')) {
-                    await _executeAction('Relaunching LG...', lgService.relaunchLG);
+                  if (await showConfirmationDialog(context, localizations.lg_confirm_relaunch)) {  // CHANGED: Localized
+                    await _executeAction(localizations.lg_action_relaunching, lgService.relaunchLG);  // CHANGED: Localized
                   }
                 } : null,
               ),
 
               _buildActionButton(
-                'REBOOT',
+                localizations.lg_action_reboot,  // CHANGED: Localized
                 lgService.isConnected ? () async {
-                  if (await showConfirmationDialog(context, 'Are you sure you want to reboot LG?')) {
-                    await _executeAction('Rebooting LG...', lgService.rebootLG);
+                  if (await showConfirmationDialog(context, localizations.lg_confirm_reboot)) {  // CHANGED: Localized
+                    await _executeAction(localizations.lg_action_rebooting, lgService.rebootLG);  // CHANGED: Localized
                   }
                 } : null,
               ),
 
               _buildActionButton(
-                'POWER OFF',
+                localizations.lg_action_power_off,  // CHANGED: Localized
                 lgService.isConnected ? () async {
-                  if (await showConfirmationDialog(context, 'Are you sure you want to power off LG?')) {
-                    await _executeAction('Powering off LG...', lgService.powerOffLG);
+                  if (await showConfirmationDialog(context, localizations.lg_confirm_power_off)) {  // CHANGED: Localized
+                    await _executeAction(localizations.lg_action_powering_off, lgService.powerOffLG);  // CHANGED: Localized
                   }
                 } : null,
               ),
@@ -357,7 +382,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
-                    'Connect to Liquid Galaxy first to enable these actions.',
+                    localizations.lg_config_connect_first_message,  // CHANGED: Localized
                     style: TextStyle(
                       color: AppColors.onSurfaceVariant,
                       fontStyle: FontStyle.italic,
@@ -373,6 +398,8 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   }
 
   Future<void> _executeAction(String message, Future<void> Function() action) async {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     // Show loading dialog
     showDialog(
       context: context,
@@ -386,7 +413,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
               CircularProgressIndicator(color: AppColors.primary),
               const SizedBox(width: 16),
               Text(
-                message,
+                message,  // This is already localized from the calling function
                 style: TextStyle(color: AppColors.onSurface),
               ),
             ],
@@ -406,7 +433,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Action completed successfully!',
+              localizations.lg_action_success,  // CHANGED: 'Action completed successfully!' → localized
               style: TextStyle(color: AppColors.onPrimary),
             ),
             backgroundColor: Colors.green,
@@ -425,7 +452,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Action failed: ${e.toString()}',
+              localizations.lg_action_failed(e.toString()),  // CHANGED: Parameterized error → localized
               style: TextStyle(color: AppColors.onError),
             ),
             backgroundColor: AppColors.error,
@@ -457,12 +484,14 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   }
 
   Widget _buildConnectionStatus() {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return Consumer<LGService>(
       builder: (context, lgService, child) {
         return Row(
           children: [
             Text(
-              'Connection Status',
+              localizations.lg_config_connection_status,  // CHANGED: 'Connection Status' → localized
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -508,16 +537,18 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   }
 
   String _getStatusText(LGConnectionStatus status) {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     switch (status) {
       case LGConnectionStatus.connected:
-        return 'Connected';
+        return localizations.lg_status_connected;    // CHANGED: 'Connected' → localized
       case LGConnectionStatus.connecting:
-        return 'Connecting...';
+        return localizations.lg_status_connecting;   // CHANGED: 'Connecting...' → localized
       case LGConnectionStatus.error:
-        return 'Error';
+        return localizations.lg_status_error;        // CHANGED: 'Error' → localized
       case LGConnectionStatus.disconnected:
       default:
-        return 'Disconnected';
+        return localizations.lg_status_disconnected; // CHANGED: 'Disconnected' → localized
     }
   }
 
@@ -550,23 +581,25 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   }
 
   Future<bool> showConfirmationDialog(BuildContext context, String message) async {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surface,
         title: Text(
-          'Confirm Action',
+          localizations.lg_confirm_title,  // CHANGED: 'Confirm Action' → localized
           style: TextStyle(color: AppColors.onSurface),
         ),
         content: Text(
-          message,
+          message,  // This is already localized from the calling function
           style: TextStyle(color: AppColors.onSurface),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
             child: Text(
-              'Cancel',
+              localizations.lg_confirm_cancel,  // CHANGED: 'Cancel' → localized
               style: TextStyle(color: AppColors.onSurfaceVariant),
             ),
           ),
@@ -576,7 +609,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.onPrimary,
             ),
-            child: const Text('Yes'),
+            child: Text(localizations.lg_confirm_yes),  // CHANGED: 'Yes' → localized
           ),
         ],
       ),
@@ -601,7 +634,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
         obscureText: isPassword ? obscureText : false,
         style: TextStyle(color: AppColors.onSurface),
         decoration: InputDecoration(
-          labelText: label,
+          labelText: label,  // This is already localized from calling function
           labelStyle: TextStyle(color: AppColors.onSurfaceVariant),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8.0),
@@ -627,14 +660,18 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   }
 
   String? _validateIP(String? v) {
-    if (v == null || v.isEmpty) return 'Required';
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
+    if (v == null || v.isEmpty) return localizations.form_required;      // CHANGED: 'Required' → localized
     final regex = RegExp(r'^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$');
-    return regex.hasMatch(v) ? null : 'Invalid IP';
+    return regex.hasMatch(v) ? null : localizations.form_invalid_ip;     // CHANGED: 'Invalid IP' → localized
   }
 
   String? _validateNumber(String? v) {
-    if (v == null || v.isEmpty) return 'Required';
-    return int.tryParse(v) != null ? null : 'Invalid number';
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
+    if (v == null || v.isEmpty) return localizations.form_required;       // CHANGED: 'Required' → localized
+    return int.tryParse(v) != null ? null : localizations.form_invalid_number;  // CHANGED: 'Invalid number' → localized
   }
 
   Future<void> _saveCredentials() async {
@@ -670,13 +707,15 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   }
 
   void _showCredentialsConfirmationDialog(Map<String, String> credentials) {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           backgroundColor: AppColors.surface,
           title: Text(
-            'QR Code Scanned Successfully',
+            localizations.qr_scanned_success_title,  // CHANGED: 'QR Code Scanned Successfully' → localized
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: AppColors.onSurface,
@@ -688,7 +727,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'The following credentials were found:',
+                  localizations.qr_credentials_found,  // CHANGED: 'The following credentials were found:' → localized
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
@@ -697,21 +736,21 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
                 ),
                 const SizedBox(height: 16),
                 _buildCredentialRow(
-                    'IP Address', credentials['ip'] ?? 'Not provided'),
+                    localizations.lg_config_ip_address, credentials['ip'] ?? 'Not provided'),  // CHANGED: Label localized
                 _buildCredentialRow(
-                    'Port', credentials['port'] ?? 'Not provided'),
+                    localizations.lg_config_port, credentials['port'] ?? 'Not provided'),     // CHANGED: Label localized
                 _buildCredentialRow(
-                    'Rigs', credentials['rigs'] ?? 'Not provided'),
+                    localizations.lg_config_rigs, credentials['rigs'] ?? 'Not provided'),     // CHANGED: Label localized
                 _buildCredentialRow(
-                    'Username', credentials['user'] ?? 'Not provided'),
-                _buildCredentialRow('Password',
+                    localizations.lg_config_username, credentials['user'] ?? 'Not provided'), // CHANGED: Label localized
+                _buildCredentialRow(localizations.lg_config_password,                         // CHANGED: Label localized
                     credentials['pass']?.isNotEmpty == true
                         ? '•' * (credentials['pass']?.length ?? 0)
                         : 'Not provided'
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Do you want to proceed with connecting to Liquid Galaxy using these credentials?',
+                  localizations.qr_proceed_question,  // CHANGED: 'Do you want to proceed...' → localized
                   style: TextStyle(
                     fontSize: 14,
                     color: AppColors.onSurface,
@@ -726,7 +765,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
                 Navigator.of(context).pop(); // Just close dialog
               },
               child: Text(
-                'Cancel',
+                localizations.lg_confirm_cancel,  // CHANGED: 'Cancel' → localized
                 style: TextStyle(color: AppColors.onSurfaceVariant),
               ),
             ),
@@ -739,7 +778,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.onPrimary,
               ),
-              child: const Text('Connect'),
+              child: Text(localizations.qr_connect_button),  // CHANGED: 'Connect' → localized
             ),
           ],
         );
@@ -792,6 +831,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   }
 
   void _connectToLiquidGalaxy() async {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
     final lgService = Provider.of<LGService>(context, listen: false);
 
     // Save credentials first
@@ -811,7 +851,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Successfully connected to Liquid Galaxy! Logo displayed.',
+              localizations.lg_connection_success,  // CHANGED: 'Successfully connected...' → localized
               style: TextStyle(color: AppColors.onPrimary),
             ),
             backgroundColor: Colors.green,
@@ -824,7 +864,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Connection failed: ${lgService.errorMessage ?? 'Unknown error'}',
+              localizations.lg_connection_failed(lgService.errorMessage ?? 'Unknown error'),  // CHANGED: Parameterized error → localized
               style: TextStyle(color: AppColors.onError),
             ),
             backgroundColor: AppColors.error,
@@ -838,7 +878,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   }
 }
 
-// QR Scanner Screen - Complete Implementation
+// QR Scanner Screen - Localized
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({Key? key}) : super(key: key);
 
@@ -857,6 +897,8 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   }
 
   void _onQRViewCreated(QRViewController ctrl) {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     controller = ctrl;
     ctrl.scannedDataStream.listen((scanData) {
       final data = scanData.code;
@@ -867,7 +909,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Invalid QR JSON data',
+              localizations.qr_invalid_data,  // CHANGED: 'Invalid QR JSON data' → localized
               style: TextStyle(color: AppColors.onError),
             ),
             backgroundColor: AppColors.error,
@@ -882,11 +924,13 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          'Scan QR Code',
+          localizations.qr_scan_title,  // CHANGED: 'Scan QR Code' → localized
           style: TextStyle(
             color: AppColors.onPrimary,
             fontWeight: FontWeight.w600,
@@ -914,7 +958,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   }
 }
 
-// Visualization Settings Screen - Complete Implementation
+// Visualization Settings Screen - Localized
 class VisualizationSettingsScreen extends StatefulWidget {
   const VisualizationSettingsScreen({Key? key}) : super(key: key);
 
@@ -948,6 +992,8 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -958,7 +1004,7 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Visualization Settings',
+          localizations.viz_settings_title,  // CHANGED: 'Visualization Settings' → localized
           style: TextStyle(
             color: AppColors.onPrimary,
             fontWeight: FontWeight.w600,
@@ -971,7 +1017,7 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSliderSetting(
-              'Confidence Threshold',
+              localizations.viz_confidence_threshold,  // CHANGED: 'Confidence Threshold' → localized
               _confidenceThreshold,
                   (value) {
                 setState(() {
@@ -1001,8 +1047,7 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        "Set the minimum confidence threshold for visualizing buildings retrieved from the API. "
-                            "Lower thresholds show more buildings, but may include less accurate results.",
+                        localizations.viz_threshold_info,  // CHANGED: Long description → localized
                         style: TextStyle(
                           color: AppColors.onSurface,
                           fontSize: 14,
@@ -1027,7 +1072,7 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
           children: [
             Expanded(
               child: Text(
-                title,
+                title,  // This is already localized from calling function
                 style: TextStyle(
                   fontSize: 16.0,
                   fontWeight: FontWeight.w400,
@@ -1068,7 +1113,7 @@ class _VisualizationSettingsScreenState extends State<VisualizationSettingsScree
   }
 }
 
-// Data Settings Screen - Complete Implementation
+// Data Settings Screen - Localized
 class DataSettingsScreen extends StatefulWidget {
   const DataSettingsScreen({Key? key}) : super(key: key);
 
@@ -1102,6 +1147,8 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -1112,7 +1159,7 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Data Settings',
+          localizations.data_settings_title,  // CHANGED: 'Data Settings' → localized
           style: TextStyle(
             color: AppColors.onPrimary,
             fontWeight: FontWeight.w600,
@@ -1123,9 +1170,11 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildInfoSetting('Data Source Version', _dataSourceVersion),
+            _buildInfoSetting(
+                localizations.data_source_version,     // CHANGED: 'Data Source Version' → localized
+                localizations.data_version_v3_2025),   // CHANGED: 'V3 (2025)' → localized
             _buildSwitchSetting(
-              'Visualization Mode (Hybrid/Dark)',
+              localizations.data_visualization_mode,   // CHANGED: 'Visualization Mode...' → localized
               _autoRefreshData,
                   (value) {
                 setState(() {
@@ -1146,7 +1195,7 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          title,
+          title,  // This is already localized from calling function
           style: TextStyle(
             fontSize: 16.0,
             fontWeight: FontWeight.w400,
@@ -1170,7 +1219,7 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          title,
+          title,  // This is already localized from calling function
           style: TextStyle(
             fontSize: 16.0,
             fontWeight: FontWeight.w400,
@@ -1184,7 +1233,7 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
             borderRadius: BorderRadius.circular(16.0),
           ),
           child: Text(
-            value,
+            value,  // This is already localized from calling function
             style: TextStyle(
               color: AppColors.primary,
               fontWeight: FontWeight.w500,
@@ -1196,7 +1245,7 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
   }
 }
 
-// About Screen - Complete Implementation
+// About Screen - Localized
 class AboutScreen extends StatefulWidget {
   const AboutScreen({Key? key}) : super(key: key);
 
@@ -1217,6 +1266,8 @@ class _AboutScreenState extends State<AboutScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: AppColors.background,
@@ -1246,7 +1297,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 padding: const EdgeInsets.only(
                     left: 20.0, right: 20.0, bottom: 5, top: 80),
                 child: Text(
-                  'About',
+                  localizations.about_title,  // CHANGED: 'About' → localized
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
@@ -1260,19 +1311,19 @@ class _AboutScreenState extends State<AboutScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20.0),
                 child: Container(
-                  width: 180,
-                  height: 180,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    color: AppColors.primary.withOpacity(0.1),
-                  ),
-                  child: Image.asset('assets/logos/logo.png')
+                    width: 180,
+                    height: 180,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: AppColors.primary.withOpacity(0.1),
+                    ),
+                    child: Image.asset('assets/logos/logo.png')
                 ),
               ),
 
               // App Title
               Text(
-                'Open Buildings Dataset Tool',
+                localizations.about_app_title,  // CHANGED: 'Open Buildings Dataset Tool' → localized
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -1285,7 +1336,7 @@ class _AboutScreenState extends State<AboutScreen> {
 
               // App Description
               Text(
-                'Interactive visualization tool for Google\'s Open Buildings dataset\nwith Liquid Galaxy integration',
+                localizations.about_app_description,  // CHANGED: Description → localized
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -1324,7 +1375,6 @@ class _AboutScreenState extends State<AboutScreen> {
                 ),
               ),
 
-
               const SizedBox(height: 30),
 
               // Action Buttons
@@ -1339,6 +1389,8 @@ class _AboutScreenState extends State<AboutScreen> {
   }
 
   Widget _buildInfoCard() {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       padding: const EdgeInsets.all(20),
@@ -1355,13 +1407,13 @@ class _AboutScreenState extends State<AboutScreen> {
       ),
       child: Column(
         children: [
-          _buildInfoRow('Version', '1.0.0', Icons.info_outline),
+          _buildInfoRow(localizations.about_version, localizations.about_version_number, Icons.info_outline),          // CHANGED: Localized
           Divider(height: 20, color: AppColors.outline),
-          _buildInfoRow('Data Source', 'Google Open Buildings V3', Icons.dataset),
+          _buildInfoRow(localizations.about_data_source, localizations.about_data_source_value, Icons.dataset),       // CHANGED: Localized
           Divider(height: 20, color: AppColors.outline),
-          _buildInfoRow('Project', 'GSoC 2025 - Liquid Galaxy', Icons.code),
+          _buildInfoRow(localizations.about_project, localizations.about_project_value, Icons.code),                  // CHANGED: Localized
           Divider(height: 20, color: AppColors.outline),
-          _buildInfoRow('Build Date', 'January 2025', Icons.calendar_today),
+          _buildInfoRow(localizations.about_build_date, localizations.about_build_date_value, Icons.calendar_today),  // CHANGED: Localized
         ],
       ),
     );
@@ -1381,14 +1433,14 @@ class _AboutScreenState extends State<AboutScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                label,
+                label,  // This is already localized from calling function
                 style: TextStyle(
                   fontSize: 14,
                   color: AppColors.onSurfaceVariant,
                 ),
               ),
               Text(
-                value,
+                value,  // This is already localized from calling function
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
@@ -1403,6 +1455,8 @@ class _AboutScreenState extends State<AboutScreen> {
   }
 
   Widget _buildDeveloperSection() {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       padding: const EdgeInsets.all(20),
@@ -1428,7 +1482,7 @@ class _AboutScreenState extends State<AboutScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Developer',
+                localizations.about_developer,  // CHANGED: 'Developer' → localized
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -1439,7 +1493,7 @@ class _AboutScreenState extends State<AboutScreen> {
           ),
           const SizedBox(height: 15),
           Text(
-            'Jaivardhan Shukla',
+            localizations.about_developer_name,  // CHANGED: 'Jaivardhan Shukla' → localized
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -1448,7 +1502,7 @@ class _AboutScreenState extends State<AboutScreen> {
           ),
           const SizedBox(height: 5),
           Text(
-            'VNIT Nagpur, India',
+            localizations.about_developer_location,  // CHANGED: 'VNIT Nagpur, India' → localized
             style: TextStyle(
               fontSize: 14,
               color: AppColors.onSurfaceVariant,
@@ -1458,9 +1512,9 @@ class _AboutScreenState extends State<AboutScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildSocialButton('GitHub', 'https://github.com/jaivsh', Icons.code),
-              _buildSocialButton('LinkedIn', 'https://www.linkedin.com/in/jaivardhan-shukla', Icons.work),
-              _buildSocialButton('Email', 'mailto:akojoel60@gmail.com', Icons.email),
+              _buildSocialButton(localizations.about_github, 'https://github.com/jaivsh', Icons.code),         // CHANGED: Localized
+              _buildSocialButton(localizations.about_linkedin, 'https://www.linkedin.com/in/jaivardhan-shukla', Icons.work),  // CHANGED: Localized
+              _buildSocialButton(localizations.about_email, 'mailto:akojoel60@gmail.com', Icons.email),        // CHANGED: Localized
             ],
           ),
         ],
@@ -1488,7 +1542,7 @@ class _AboutScreenState extends State<AboutScreen> {
             ),
             const SizedBox(width: 4),
             Text(
-              label,
+              label,  // This is already localized from calling function
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.primary,
@@ -1502,6 +1556,8 @@ class _AboutScreenState extends State<AboutScreen> {
   }
 
   Widget _buildProjectDetailsSection() {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       padding: const EdgeInsets.all(20),
@@ -1527,7 +1583,7 @@ class _AboutScreenState extends State<AboutScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'About this Project',
+                localizations.about_project_details,  // CHANGED: 'About this Project' → localized
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -1538,7 +1594,7 @@ class _AboutScreenState extends State<AboutScreen> {
           ),
           const SizedBox(height: 15),
           Text(
-            'This application integrates Google\'s Open Buildings dataset with interactive mapping capabilities and Liquid Galaxy visualization. Built as part of Google Summer of Code 2025 with the Liquid Galaxy organization.',
+            localizations.about_project_description,  // CHANGED: Long description → localized
             style: TextStyle(
               fontSize: 14,
               color: AppColors.onSurfaceVariant,
@@ -1553,19 +1609,21 @@ class _AboutScreenState extends State<AboutScreen> {
   }
 
   Widget _buildFeatureList() {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     final features = [
-      'Interactive building footprint visualization',
-      'Real-time data from Google Earth Engine',
-      'Liquid Galaxy integration for immersive experience',
-      'Grid-based mapping with zoom controls',
-      'Building confidence score visualization',
+      localizations.about_feature_1,  // CHANGED: All features → localized
+      localizations.about_feature_2,
+      localizations.about_feature_3,
+      localizations.about_feature_4,
+      localizations.about_feature_5,
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Key Features:',
+          localizations.about_key_features,  // CHANGED: 'Key Features:' → localized
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -1586,7 +1644,7 @@ class _AboutScreenState extends State<AboutScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  feature,
+                  feature,  // This is already localized
                   style: TextStyle(
                     fontSize: 14,
                     color: AppColors.onSurfaceVariant,
@@ -1601,6 +1659,8 @@ class _AboutScreenState extends State<AboutScreen> {
   }
 
   Widget _buildActionButtons() {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+
     return Column(
       children: [
         SizedBox(
@@ -1608,7 +1668,7 @@ class _AboutScreenState extends State<AboutScreen> {
           child: ElevatedButton.icon(
             onPressed: () => _launchURL(Uri.parse('https://github.com/jaivsh')),
             icon: const Icon(Icons.open_in_new, size: 20),
-            label: const Text('View Project Repository'),
+            label: Text(localizations.about_view_repository),  // CHANGED: 'View Project Repository' → localized
             style: ElevatedButton.styleFrom(
               foregroundColor: AppColors.onPrimary,
               backgroundColor: AppColors.primary,
@@ -1626,7 +1686,7 @@ class _AboutScreenState extends State<AboutScreen> {
               child: OutlinedButton.icon(
                 onPressed: () => _launchURL(Uri.parse('https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_Research_open-buildings_v3_polygons')),
                 icon: const Icon(Icons.dataset, size: 18),
-                label: const Text('Open Buildings Dataset'),
+                label: Text(localizations.about_open_buildings_dataset),  // CHANGED: 'Open Buildings Dataset' → localized
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   side: BorderSide(color: AppColors.primary),
@@ -1642,7 +1702,7 @@ class _AboutScreenState extends State<AboutScreen> {
               child: OutlinedButton.icon(
                 onPressed: () => _launchURL(Uri.parse('https://www.liquidgalaxy.eu/')),
                 icon: const Icon(Icons.public, size: 18),
-                label: const Text('Liquid Galaxy'),
+                label: Text(localizations.about_liquid_galaxy),  // CHANGED: 'Liquid Galaxy' → localized
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   side: BorderSide(color: AppColors.primary),

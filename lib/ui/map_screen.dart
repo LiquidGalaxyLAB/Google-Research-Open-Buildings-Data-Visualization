@@ -1,4 +1,4 @@
-// ui/map_screen.dart - THEMED VERSION WITH APP COLORS
+// ui/map_screen.dart - THEMED VERSION WITH APP COLORS AND LOCALIZATION
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -15,8 +15,7 @@ import 'dart:math';
 import 'package:proofofconceptapp/components/selected_region_bottom_sheet.dart' hide LatLng;
 import '../utils/colors.dart';
 import 'help_screen.dart';
-
-
+import '../l10n/app_localizations.dart';
 
 class MapScreen extends StatefulWidget {
   @override
@@ -143,9 +142,9 @@ class _MapScreenState extends State<MapScreen> {
         if (mounted) {
           String message;
           if (currentMapZoom < minZoom) {
-            message = 'Maximum zoom out reached (${minZoom.toInt()}x)';
+            message = AppLocalizations.of(context)!.map_zoom_out_limit(minZoom.toInt().toString());
           } else {
-            message = 'Maximum zoom in reached (${maxZoom.toInt()}x)';
+            message = AppLocalizations.of(context)!.map_zoom_in_limit(maxZoom.toInt().toString());
           }
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -178,7 +177,7 @@ class _MapScreenState extends State<MapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Maximum zoom in reached (${maxZoom.toInt()}x)',
+              AppLocalizations.of(context)!.map_zoom_in_limit(maxZoom.toInt().toString()),
               style: TextStyle(color: AppColors.onSurface),
             ),
             backgroundColor: AppColors.surfaceContainer,
@@ -218,7 +217,7 @@ class _MapScreenState extends State<MapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Maximum zoom out reached (${minZoom.toInt()}x)',
+              AppLocalizations.of(context)!.map_zoom_out_limit(minZoom.toInt().toString()),
               style: TextStyle(color: AppColors.onSurface),
             ),
             backgroundColor: AppColors.surfaceContainer,
@@ -359,7 +358,7 @@ class _MapScreenState extends State<MapScreen> {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Building Details',
+                      AppLocalizations.of(context)!.map_building_details_title,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -373,16 +372,27 @@ class _MapScreenState extends State<MapScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildInfoRow('Area:', '${building.area.toStringAsFixed(0)} m²'),
+                  _buildInfoRow(
+                    AppLocalizations.of(context)!.map_building_area_label,
+                    '${building.area.toStringAsFixed(0)} m²',
+                  ),
                   SizedBox(height: 8),
-                  _buildInfoRow('Confidence:', '${(building.confidenceScore * 100).toStringAsFixed(1)}%'),
+                  _buildInfoRow(
+                    AppLocalizations.of(context)!.map_building_confidence_label,
+                    '${(building.confidenceScore * 100).toStringAsFixed(1)}%',
+                  ),
                   SizedBox(height: 8),
-                  _buildInfoRow('Points:', '${building.polygonPoints.length}'),
+                  _buildInfoRow(
+                    AppLocalizations.of(context)!.map_building_points_label,
+                    '${building.polygonPoints.length}',
+                  ),
                   if (building.polygonPoints.isNotEmpty) ...[
                     SizedBox(height: 8),
-                    _buildInfoRow('Center:',
-                        '${_calculateBuildingCenter(building).latitude.toStringAsFixed(5)}, '
-                            '${_calculateBuildingCenter(building).longitude.toStringAsFixed(5)}'),
+                    _buildInfoRow(
+                      AppLocalizations.of(context)!.map_building_center_label,
+                      '${_calculateBuildingCenter(building).latitude.toStringAsFixed(5)}, '
+                          '${_calculateBuildingCenter(building).longitude.toStringAsFixed(5)}',
+                    ),
                   ],
                   SizedBox(height: 16),
                   // Connection status indicator
@@ -395,7 +405,9 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        lgService.isConnected ? 'LG Connected' : 'LG Disconnected',
+                        lgService.isConnected
+                            ? AppLocalizations.of(context)!.map_lg_connected
+                            : AppLocalizations.of(context)!.map_lg_disconnected,
                         style: TextStyle(
                           color: lgService.isConnected ? Colors.green : AppColors.error,
                           fontSize: 12,
@@ -408,7 +420,10 @@ class _MapScreenState extends State<MapScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Close', style: TextStyle(color: AppColors.onSurface)),
+                  child: Text(
+                    AppLocalizations.of(context)!.map_building_close,
+                    style: TextStyle(color: AppColors.onSurface),
+                  ),
                 ),
                 ElevatedButton.icon(
                   onPressed: lgService.isConnected ? () async {
@@ -416,7 +431,7 @@ class _MapScreenState extends State<MapScreen> {
                     await _sendBuildingToLiquidGalaxy(building, lgService);
                   } : null,
                   icon: Icon(Icons.send, size: 16),
-                  label: Text('Send to LG'),
+                  label: Text(AppLocalizations.of(context)!.map_building_send_to_lg),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: lgService.isConnected ? AppColors.primary : AppColors.surfaceDim,
                     foregroundColor: lgService.isConnected ? AppColors.onPrimary : AppColors.onSurfaceVariant,
@@ -445,7 +460,7 @@ class _MapScreenState extends State<MapScreen> {
               CircularProgressIndicator(color: AppColors.primary),
               SizedBox(width: 16),
               Text(
-                'Sending to Liquid Galaxy...',
+                AppLocalizations.of(context)!.map_sending_building_to_lg,
                 style: TextStyle(color: AppColors.onSurface),
               ),
             ],
@@ -467,7 +482,7 @@ class _MapScreenState extends State<MapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Building sent to Liquid Galaxy successfully!',
+              AppLocalizations.of(context)!.map_building_sent_success,
               style: TextStyle(color: AppColors.onPrimary),
             ),
             backgroundColor: Colors.green,
@@ -486,7 +501,7 @@ class _MapScreenState extends State<MapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Failed to send building to LG: $e',
+              AppLocalizations.of(context)!.map_building_send_failed(e.toString()),
               style: TextStyle(color: AppColors.onError),
             ),
             backgroundColor: AppColors.error,
@@ -578,12 +593,12 @@ class _MapScreenState extends State<MapScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Please connect to Liquid Galaxy first',
+            AppLocalizations.of(context)!.map_connect_lg_first,
             style: TextStyle(color: AppColors.onSurface),
           ),
           backgroundColor: Colors.orange,
           action: SnackBarAction(
-            label: 'Connect',
+            label: AppLocalizations.of(context)!.map_connect_action,
             textColor: AppColors.onPrimary,
             onPressed: () {
               Navigator.push(
@@ -613,7 +628,7 @@ class _MapScreenState extends State<MapScreen> {
               CircularProgressIndicator(color: AppColors.primary),
               SizedBox(width: 16),
               Text(
-                'Sending region to Liquid Galaxy...',
+                AppLocalizations.of(context)!.map_sending_region_to_lg,
                 style: TextStyle(color: AppColors.onSurface),
               ),
             ],
@@ -635,7 +650,7 @@ class _MapScreenState extends State<MapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Region with ${buildings.length} buildings sent to Liquid Galaxy!',
+              AppLocalizations.of(context)!.map_region_sent_success(buildings.length),
               style: TextStyle(color: AppColors.onPrimary),
             ),
             backgroundColor: Colors.green,
@@ -654,7 +669,7 @@ class _MapScreenState extends State<MapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Failed to send region to LG: $e',
+              AppLocalizations.of(context)!.map_region_send_failed(e.toString()),
               style: TextStyle(color: AppColors.onError),
             ),
             backgroundColor: AppColors.error,
@@ -920,7 +935,7 @@ class _MapScreenState extends State<MapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Search failed. Please try again.',
+              AppLocalizations.of(context)!.map_search_failed,
               style: TextStyle(color: AppColors.onError),
             ),
             backgroundColor: AppColors.error,
@@ -996,7 +1011,7 @@ class _MapScreenState extends State<MapScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Failed to load buildings: $e',
+              AppLocalizations.of(context)!.map_buildings_load_failed(e.toString()),
               style: TextStyle(color: AppColors.onError),
             ),
             backgroundColor: AppColors.error,
@@ -1028,7 +1043,7 @@ class _MapScreenState extends State<MapScreen> {
           backgroundColor: AppColors.primary,
           elevation: 0,
           title: Text(
-            'Open Buildings',
+            AppLocalizations.of(context)!.map_title,
             style: TextStyle(
               color: AppColors.onPrimary,
               fontWeight: FontWeight.w600,
@@ -1049,7 +1064,9 @@ class _MapScreenState extends State<MapScreen> {
                       MaterialPageRoute(builder: (_) => const LiquidGalaxyConfigScreen()),
                     );
                   },
-                  tooltip: lgService.isConnected ? 'LG Connected' : 'LG Disconnected',
+                  tooltip: lgService.isConnected
+                      ? AppLocalizations.of(context)!.map_lg_connected
+                      : AppLocalizations.of(context)!.map_lg_disconnected,
                 );
               },
             ),
@@ -1071,7 +1088,7 @@ class _MapScreenState extends State<MapScreen> {
               IconButton(
                 icon: Icon(Icons.clear_all, color: AppColors.onPrimary),
                 onPressed: _clearBuildingSelection,
-                tooltip: 'Clear building selection',
+                tooltip: AppLocalizations.of(context)!.map_clear_selection_tooltip,
               ),
           ],
         ),
@@ -1199,7 +1216,7 @@ class _MapScreenState extends State<MapScreen> {
                       focusNode: searchFocusNode,
                       style: TextStyle(color: AppColors.onSurface),
                       decoration: InputDecoration(
-                        hintText: 'Search for a location',
+                        hintText: AppLocalizations.of(context)!.map_search_hint,
                         hintStyle: TextStyle(color: AppColors.onSurfaceVariant),
                         prefixIcon: Icon(Icons.search, color: AppColors.onSurfaceVariant),
                         suffixIcon: searchController.text.isNotEmpty
@@ -1260,7 +1277,7 @@ class _MapScreenState extends State<MapScreen> {
                               ),
                               SizedBox(width: 12),
                               Text(
-                                'Searching...',
+                                AppLocalizations.of(context)!.map_searching,
                                 style: TextStyle(color: AppColors.onSurface),
                               ),
                             ],
@@ -1271,7 +1288,7 @@ class _MapScreenState extends State<MapScreen> {
                           ? Container(
                         padding: EdgeInsets.all(20),
                         child: Text(
-                          'No results found',
+                          AppLocalizations.of(context)!.map_search_no_results,
                           style: TextStyle(color: AppColors.onSurfaceVariant),
                         ),
                       )
@@ -1330,7 +1347,7 @@ class _MapScreenState extends State<MapScreen> {
                     child: Column(
                       children: [
                         Text(
-                          'Overlay Size',
+                          AppLocalizations.of(context)!.map_overlay_size_label,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
@@ -1507,7 +1524,7 @@ class _MapScreenState extends State<MapScreen> {
                       CircularProgressIndicator(color: AppColors.primary),
                       SizedBox(height: 16),
                       Text(
-                        'Loading buildings...',
+                        AppLocalizations.of(context)!.map_loading_buildings,
                         style: TextStyle(color: AppColors.onSurface),
                       ),
                     ],
@@ -1541,7 +1558,7 @@ class _MapScreenState extends State<MapScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  'Loading historical data...',
+                                  AppLocalizations.of(context)!.map_loading_historical_data,
                                   style: TextStyle(color: AppColors.onSurface),
                                 ),
                                 backgroundColor: AppColors.surfaceContainer,
@@ -1587,7 +1604,7 @@ class _MapScreenState extends State<MapScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'Selected Building',
+                              AppLocalizations.of(context)!.map_selected_building_title,
                               style: TextStyle(
                                 color: AppColors.onError,
                                 fontWeight: FontWeight.bold,
@@ -1595,7 +1612,10 @@ class _MapScreenState extends State<MapScreen> {
                               ),
                             ),
                             Text(
-                              'Area: ${selectedBuilding!.area.toStringAsFixed(0)} m² • Confidence: ${(selectedBuilding!.confidenceScore * 100).toStringAsFixed(0)}%',
+                              AppLocalizations.of(context)!.map_selected_building_info(
+                                selectedBuilding!.area.toStringAsFixed(0),
+                                (selectedBuilding!.confidenceScore * 100).toStringAsFixed(0),
+                              ),
                               style: TextStyle(
                                 color: AppColors.onError.withOpacity(0.9),
                                 fontSize: 12,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../l10n/app_localizations.dart';
 import '../utils/colors.dart';
 
 class HelpScreen extends StatelessWidget {
@@ -6,6 +8,7 @@ class HelpScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;  // ADD THIS
     final screenSize = MediaQuery.of(context).size;
     final screenHeight = screenSize.height;
     final screenWidth = screenSize.width;
@@ -16,7 +19,7 @@ class HelpScreen extends StatelessWidget {
         backgroundColor: AppColors.surface,
         elevation: 0,
         title: Text(
-          'Help',
+          localizations.help_title,  // CHANGED: 'Help' → localized
           style: TextStyle(
             color: AppColors.onSurface,
             fontWeight: FontWeight.w600,
@@ -38,7 +41,7 @@ class HelpScreen extends StatelessWidget {
           children: [
             // Introduction
             Text(
-              'Open Buildings Explorer',
+              localizations.help_app_title,  // CHANGED: 'Open Buildings Explorer' → localized
               style: TextStyle(
                 fontSize: screenWidth * 0.06,
                 fontWeight: FontWeight.w700,
@@ -47,7 +50,7 @@ class HelpScreen extends StatelessWidget {
             ),
             SizedBox(height: screenHeight * 0.01),
             Text(
-              'Explore building footprints across the globe with Liquid Galaxy integration',
+              localizations.help_app_description,  // CHANGED: Description → localized
               style: TextStyle(
                 fontSize: screenWidth * 0.04,
                 color: AppColors.onSurfaceVariant,
@@ -61,8 +64,8 @@ class HelpScreen extends StatelessWidget {
             _buildHelpStep(
               context,
               stepNumber: '1',
-              title: 'Select Map Area',
-              description: 'Use the controls on the right side of the map to modify and select the area of tiles you want to explore.',
+              title: localizations.help_step1_title,         // CHANGED: Localized
+              description: localizations.help_step1_description,  // CHANGED: Localized
               icon: Icons.zoom_in_map_rounded,
             ),
 
@@ -72,8 +75,8 @@ class HelpScreen extends StatelessWidget {
             _buildHelpStep(
               context,
               stepNumber: '2',
-              title: 'Choose a Tile',
-              description: 'Click on a specific tile within your selected area to fetch building data from the Open Buildings dataset.',
+              title: localizations.help_step2_title,         // CHANGED: Localized
+              description: localizations.help_step2_description,  // CHANGED: Localized
               icon: Icons.touch_app_rounded,
             ),
 
@@ -83,8 +86,8 @@ class HelpScreen extends StatelessWidget {
             _buildHelpStep(
               context,
               stepNumber: '3',
-              title: 'View Results',
-              description: 'Once data is fetched, a bottom sheet will appear showing the results. You can send all data to Liquid Galaxy for visualization.',
+              title: localizations.help_step3_title,         // CHANGED: Localized
+              description: localizations.help_step3_description,  // CHANGED: Localized
               icon: Icons.view_list_rounded,
             ),
 
@@ -94,8 +97,8 @@ class HelpScreen extends StatelessWidget {
             _buildHelpStep(
               context,
               stepNumber: '4',
-              title: 'Explore Buildings',
-              description: 'Switch to the Buildings tab to see individual building details, including plus codes and confidence scores.',
+              title: localizations.help_step4_title,         // CHANGED: Localized
+              description: localizations.help_step4_description,  // CHANGED: Localized
               icon: Icons.business_rounded,
             ),
 
@@ -121,7 +124,7 @@ class HelpScreen extends StatelessWidget {
                       ),
                       SizedBox(width: screenWidth * 0.02),
                       Text(
-                        'About Confidence Scores',
+                        localizations.help_confidence_title,  // CHANGED: Localized
                         style: TextStyle(
                           fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.w600,
@@ -132,7 +135,7 @@ class HelpScreen extends StatelessWidget {
                   ),
                   SizedBox(height: screenHeight * 0.01),
                   Text(
-                    'Each building shows a confidence score that indicates how reliable the data from the Open Buildings dataset is for that particular structure.',
+                    localizations.help_confidence_description,  // CHANGED: Localized
                     style: TextStyle(
                       fontSize: screenWidth * 0.035,
                       color: AppColors.onSurfaceVariant,
@@ -165,20 +168,21 @@ class HelpScreen extends StatelessWidget {
     );
   }
 
+  // _buildHelpStep method stays the same - title and description are passed as parameters
   Widget _buildHelpStep(
       BuildContext context, {
         required String stepNumber,
-        required String title,
-        required String description,
+        required String title,      // This will receive localized text
+        required String description, // This will receive localized text
         required IconData icon,
       }) {
+    // Method implementation stays exactly the same
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Step number circle
         Container(
           width: screenWidth * 0.12,
           height: screenWidth * 0.12,
@@ -197,10 +201,7 @@ class HelpScreen extends StatelessWidget {
             ),
           ),
         ),
-
         SizedBox(width: screenWidth * 0.04),
-
-        // Content
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,7 +216,7 @@ class HelpScreen extends StatelessWidget {
                   SizedBox(width: screenWidth * 0.02),
                   Expanded(
                     child: Text(
-                      title,
+                      title,  // This will be localized text
                       style: TextStyle(
                         fontSize: screenWidth * 0.045,
                         fontWeight: FontWeight.w600,
@@ -227,7 +228,7 @@ class HelpScreen extends StatelessWidget {
               ),
               SizedBox(height: screenHeight * 0.008),
               Text(
-                description,
+                description,  // This will be localized text
                 style: TextStyle(
                   fontSize: screenWidth * 0.035,
                   color: AppColors.onSurfaceVariant,
