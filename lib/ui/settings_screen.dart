@@ -1,4 +1,4 @@
-// ui/settings_screen.dart - FULLY LOCALIZED VERSION
+// ui/settings_screen.dart
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -7,8 +7,6 @@ import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_linkify/flutter_linkify.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-// CORRECTED IMPORT PATH:
 
 import '../components/language_selector.dart';
 import '../l10n/app_localizations.dart';
@@ -685,7 +683,10 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
     );
   }
 
+  // UPDATED: Modified QR scan method to automatically populate and connect
   Future<void> _scanQRCode() async {
+    final localizations = AppLocalizations.of(context)!;
+
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const QRScannerScreen()),
@@ -701,133 +702,33 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
         'pass': result['pass']?.toString() ?? '',
       };
 
-      // Show confirmation dialog
-      _showCredentialsConfirmationDialog(credentials);
+      // Show a brief success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            localizations.qr_scanned_success_title,
+            style: TextStyle(color: AppColors.onPrimary),
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+
+      // Automatically populate the text fields
+      setState(() {
+        _ipController.text = credentials['ip'] ?? '';
+        _portController.text = credentials['port'] ?? '';
+        _rigsController.text = credentials['rigs'] ?? '';
+        _usernameController.text = credentials['user'] ?? '';
+        _passwordController.text = credentials['pass'] ?? '';
+      });
+
+      // Automatically attempt connection
+      _connectToLiquidGalaxy();
     }
-  }
-
-  void _showCredentialsConfirmationDialog(Map<String, String> credentials) {
-    final localizations = AppLocalizations.of(context)!;  // ADD THIS
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: AppColors.surface,
-          title: Text(
-            localizations.qr_scanned_success_title,  // CHANGED: 'QR Code Scanned Successfully' → localized
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColors.onSurface,
-            ),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  localizations.qr_credentials_found,  // CHANGED: 'The following credentials were found:' → localized
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildCredentialRow(
-                    localizations.lg_config_ip_address, credentials['ip'] ?? 'Not provided'),  // CHANGED: Label localized
-                _buildCredentialRow(
-                    localizations.lg_config_port, credentials['port'] ?? 'Not provided'),     // CHANGED: Label localized
-                _buildCredentialRow(
-                    localizations.lg_config_rigs, credentials['rigs'] ?? 'Not provided'),     // CHANGED: Label localized
-                _buildCredentialRow(
-                    localizations.lg_config_username, credentials['user'] ?? 'Not provided'), // CHANGED: Label localized
-                _buildCredentialRow(localizations.lg_config_password,                         // CHANGED: Label localized
-                    credentials['pass']?.isNotEmpty == true
-                        ? '•' * (credentials['pass']?.length ?? 0)
-                        : 'Not provided'
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  localizations.qr_proceed_question,  // CHANGED: 'Do you want to proceed...' → localized
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Just close dialog
-              },
-              child: Text(
-                localizations.lg_confirm_cancel,  // CHANGED: 'Cancel' → localized
-                style: TextStyle(color: AppColors.onSurfaceVariant),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _applyCredentialsAndConnect(credentials);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.onPrimary,
-              ),
-              child: Text(localizations.qr_connect_button),  // CHANGED: 'Connect' → localized
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildCredentialRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              '$label:',
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: AppColors.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontWeight: FontWeight.w400,
-                color: AppColors.onSurface,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _applyCredentialsAndConnect(Map<String, String> credentials) {
-    // Populate the text fields with scanned data
-    setState(() {
-      _ipController.text = credentials['ip'] ?? '';
-      _portController.text = credentials['port'] ?? '';
-      _rigsController.text = credentials['rigs'] ?? '';
-      _usernameController.text = credentials['user'] ?? '';
-      _passwordController.text = credentials['pass'] ?? '';
-    });
-
-    // Save the preferences and attempt connection
-    _connectToLiquidGalaxy();
   }
 
   void _connectToLiquidGalaxy() async {
@@ -878,7 +779,7 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
   }
 }
 
-// QR Scanner Screen - Localized
+// QR Scanner Screen - Updated for auto-connection
 class QRScannerScreen extends StatefulWidget {
   const QRScannerScreen({Key? key}) : super(key: key);
 
@@ -889,6 +790,7 @@ class QRScannerScreen extends StatefulWidget {
 class _QRScannerScreenState extends State<QRScannerScreen> {
   final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
   QRViewController? controller;
+  bool _hasScanned = false; // Prevent multiple scans
 
   @override
   void dispose() {
@@ -897,19 +799,31 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   }
 
   void _onQRViewCreated(QRViewController ctrl) {
-    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+    final localizations = AppLocalizations.of(context)!;
 
     controller = ctrl;
     ctrl.scannedDataStream.listen((scanData) {
+      // Prevent multiple scans
+      if (_hasScanned) return;
+      _hasScanned = true;
+
       final data = scanData.code;
       try {
         final map = json.decode(data ?? '') as Map<String, dynamic>;
-        Navigator.of(context).pop(map); // send back parsed JSON
+
+        // Pause the camera to prevent further scanning
+        controller?.pauseCamera();
+
+        // Return the parsed data immediately
+        Navigator.of(context).pop(map);
       } catch (e) {
+        // Reset the scan flag if there's an error
+        _hasScanned = false;
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              localizations.qr_invalid_data,  // CHANGED: 'Invalid QR JSON data' → localized
+              localizations.qr_invalid_data,
               style: TextStyle(color: AppColors.onError),
             ),
             backgroundColor: AppColors.error,
@@ -924,13 +838,13 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+    final localizations = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          localizations.qr_scan_title,  // CHANGED: 'Scan QR Code' → localized
+          localizations.qr_scan_title,
           style: TextStyle(
             color: AppColors.onPrimary,
             fontWeight: FontWeight.w600,
@@ -943,16 +857,34 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: QRView(
-        key: qrKey,
-        onQRViewCreated: _onQRViewCreated,
-        overlay: QrScannerOverlayShape(
-          borderColor: AppColors.primary,
-          borderRadius: 10,
-          borderLength: 30,
-          borderWidth: 10,
-          cutOutSize: 300,
-        ),
+      body: Column(
+        children: [
+          Expanded(
+            child: QRView(
+              key: qrKey,
+              onQRViewCreated: _onQRViewCreated,
+              overlay: QrScannerOverlayShape(
+                borderColor: AppColors.primary,
+                borderRadius: 10,
+                borderLength: 30,
+                borderWidth: 10,
+                cutOutSize: 300,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: AppColors.surface,
+            child: Text(
+              'Point your camera at the QR code to scan', // Can add this to localizations if needed
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppColors.onSurface,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

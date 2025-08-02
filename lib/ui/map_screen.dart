@@ -1215,6 +1215,7 @@ class _MapScreenState extends State<MapScreen> {
                       controller: searchController,
                       focusNode: searchFocusNode,
                       style: TextStyle(color: AppColors.onSurface),
+                        cursorColor: Colors.black,
                       decoration: InputDecoration(
                         hintText: AppLocalizations.of(context)!.map_search_hint,
                         hintStyle: TextStyle(color: AppColors.onSurfaceVariant),

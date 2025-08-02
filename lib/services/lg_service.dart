@@ -38,6 +38,10 @@ class LGService extends ChangeNotifier {
   Timer? _reconnectTimer;
   bool _autoReconnectEnabled = true;
 
+  // Orbit functionality
+  Timer? _orbitTimer;
+  bool _isOrbiting = false;
+
   // Getters
   LGConnectionStatus get status => _status;
   String? get errorMessage => _errorMessage;
@@ -48,6 +52,7 @@ class LGService extends ChangeNotifier {
   String? get username => _username;
   String? get password => _password;
   String? get port => _port;
+  bool get isOrbiting => _isOrbiting;
 
   // Calculate left screen for logo placement
   int get leftScreen {
@@ -64,6 +69,67 @@ class LGService extends ChangeNotifier {
     if (rigs == 2) return 2;
     // For 3+ rigs, rightmost is the last screen
     return rigs;
+  }
+
+  // Orbit functionality
+  Future<void> startOrbit360({
+    required double latitude,
+    required double longitude,
+    double altitude = 1000,
+    double tilt = 45,
+    double range = 500,
+    double speedDegPerSecond = 6.0, // 6 degrees per second = 60 seconds for full orbit
+  }) async {
+    if (_client == null) {
+      throw Exception('Not connected to Liquid Galaxy');
+    }
+
+    if (_isOrbiting) {
+      stopOrbit();
+    }
+
+    _isOrbiting = true;
+    notifyListeners();
+
+    try {
+      double currentHeading = 0;
+      final double stepSize = speedDegPerSecond / 2; // 2 updates per second
+
+      _orbitTimer = Timer.periodic(Duration(milliseconds: 500), (timer) async {
+        if (!_isOrbiting) {
+          timer.cancel();
+          return;
+        }
+
+        try {
+          // Send orbit command using flytoview
+          String flytoQuery = "flytoview=<LookAt><longitude>$longitude</longitude><latitude>$latitude</latitude><altitude>$altitude</altitude><heading>$currentHeading</heading><tilt>$tilt</tilt><range>$range</range></LookAt>";
+          await _client!.run("echo '$flytoQuery' > /tmp/query.txt");
+
+          currentHeading += stepSize;
+          if (currentHeading >= 360) {
+            currentHeading = 0; // Continue orbiting - reset to 0 and keep going
+          }
+        } catch (e) {
+          print('Error during orbit: $e');
+          stopOrbit();
+        }
+      });
+
+      print('Started continuous 360° orbit at $latitude, $longitude');
+    } catch (e) {
+      _isOrbiting = false;
+      notifyListeners();
+      throw Exception('Failed to start orbit: $e');
+    }
+  }
+
+  void stopOrbit() {
+    _isOrbiting = false;
+    _orbitTimer?.cancel();
+    _orbitTimer = null;
+    notifyListeners();
+    print('Orbit stopped');
   }
 
   // Corrected debugging methods with proper return types:
@@ -104,7 +170,7 @@ class LGService extends ChangeNotifier {
       await _client!.run(command);
 
       // Step 2: Create and send info panel to rightmost screen
-     // String infoPanelKML = _createRightmostInfoPanel([]); // Start with no selected building
+      // String infoPanelKML = _createRightmostInfoPanel([]); // Start with no selected building
       //String infoPanelCommand = "echo '${infoPanelKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_$rightScreen.kml";
       //await _client!.run(infoPanelCommand);
 
@@ -344,6 +410,7 @@ class LGService extends ChangeNotifier {
   Future<void> disconnect() async {
     try {
       _stopAutoReconnectTimer();
+      stopOrbit(); // Stop orbit when disconnecting
       _client?.close();
       _client = null;
       _setStatus(LGConnectionStatus.disconnected);
@@ -639,6 +706,39 @@ class LGService extends ChangeNotifier {
     }
   }
 
+  static String buildOrbit(double lat, double lon){
+    String lookAts = '';
+
+    for (int i=0;i<=360;i+=10) {
+      lookAts += '''
+      <gx:FlyTo>
+              <gx:duration>1.2</gx:duration>
+              <gx:flyToMode>smooth</gx:flyToMode>
+              <LookAt>
+                  <longitude>$lon</longitude>
+                  <latitude>$lat</latitude>
+                  <heading>${i.toDouble()}</heading>
+                  <tilt>60</tilt>
+                  <range>40000</range>
+                  <gx:fovy>60</gx:fovy> 
+                  <altitude>3341.7995674</altitude> 
+                  <gx:altitudeMode>absolute</gx:altitudeMode>
+              </LookAt>
+            </gx:FlyTo>
+''';
+    }
+
+    return '''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+   <gx:Tour>
+   <name>Orbit</name>
+      <gx:Playlist>
+         $lookAts
+      </gx:Playlist>
+   </gx:Tour>
+</kml>''';
+  }
+
   // Add this to your LGService class in lg_service.dart
   Future<void> sendBuildingWithInfoPanel(String buildingKML, String infoPanelKML, double latitude, double longitude) async {
     if (_client == null) {
@@ -807,6 +907,7 @@ class LGService extends ChangeNotifier {
   @override
   void dispose() {
     _stopAutoReconnectTimer();
+    stopOrbit(); // Stop orbit when disposing
     _client?.close();
     super.dispose();
   }

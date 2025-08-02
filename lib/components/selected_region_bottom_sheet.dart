@@ -90,6 +90,293 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
     }).toList();
   }
 
+  // Send region orbit to Liquid Galaxy
+  Future<void> _sendRegionOrbitToLG(LGService lgService) async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: AppColors.primary),
+              SizedBox(width: 16),
+              Text(
+                'Starting region orbit...',
+                style: TextStyle(color: AppColors.onSurface),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      // Calculate region center
+      final regionCenter = _calculateRegionCenter();
+
+      // Create orbit KML using the static function
+      String orbitKML = LGService.buildOrbit(regionCenter.latitude, regionCenter.longitude);
+
+      // Send orbit to LG
+      await lgService.sendKMLToSlave(orbitKML, 2);
+
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Started 360° orbit around region!',
+              style: TextStyle(color: AppColors.onPrimary),
+            ),
+            backgroundColor: Colors.green,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to start orbit: $e',
+              style: TextStyle(color: AppColors.onError),
+            ),
+            backgroundColor: AppColors.error,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  // Send building orbit to Liquid Galaxy
+  Future<void> _sendBuildingOrbitToLG(BuildingData building, LGService lgService) async {
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: AppColors.primary),
+              SizedBox(width: 16),
+              Text(
+                'Starting building orbit...',
+                style: TextStyle(color: AppColors.onSurface),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      // Get building center coordinates
+      final center = _calculateBuildingCenter(building);
+
+      // Create orbit KML using the static function
+      String orbitKML = LGService.buildOrbit(center.latitude, center.longitude);
+
+      // Send orbit to LG
+      await lgService.sendKMLToSlave(orbitKML, 2);
+
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Started 360° orbit around building!',
+              style: TextStyle(color: AppColors.onPrimary),
+            ),
+            backgroundColor: Colors.green,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Failed to start orbit: $e',
+              style: TextStyle(color: AppColors.onError),
+            ),
+            backgroundColor: AppColors.error,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  // Show building information dialog with orbit button
+  void _showBuildingInfoDialog(BuildingData building) {
+    final center = _calculateBuildingCenter(building);
+    final plusCode = _generatePlusCode(building);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Consumer<LGService>(
+          builder: (context, lgService, child) {
+            return AlertDialog(
+              backgroundColor: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Row(
+                children: [
+                  Icon(Icons.apartment, color: AppColors.primary),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Building Details',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Plus Code
+                    Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainer,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.outlineVariant),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Plus Code',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            plusCode,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 16),
+
+                    // Building Stats
+                    _buildInfoRow('Area', '${building.area.toStringAsFixed(0)} m²'),
+                    SizedBox(height: 8),
+                    _buildInfoRow('Confidence', '${(building.confidenceScore * 100).toStringAsFixed(1)}%'),
+                    SizedBox(height: 8),
+                    _buildInfoRow('Complexity', '${building.polygonPoints.length} points'),
+                    SizedBox(height: 8),
+                    _buildInfoRow('Center', '${center.latitude.toStringAsFixed(6)}, ${center.longitude.toStringAsFixed(6)}'),
+
+                    SizedBox(height: 16),
+
+                    // Connection status
+                    Row(
+                      children: [
+                        Icon(
+                          lgService.isConnected ? Icons.cloud_done : Icons.cloud_off,
+                          color: lgService.isConnected ? Colors.green : AppColors.error,
+                          size: 16,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          lgService.isConnected ? 'LG Connected' : 'LG Disconnected',
+                          style: TextStyle(
+                            color: lgService.isConnected ? Colors.green : AppColors.error,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text(
+                    'Close',
+                    style: TextStyle(color: AppColors.onSurface),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: lgService.isConnected ? () async {
+                    Navigator.of(context).pop();
+                    await _sendIndividualBuildingToLG(building, lgService);
+                  } : null,
+                  icon: Icon(Icons.send, size: 16),
+                  label: Text('Send to LG'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: lgService.isConnected ? AppColors.primary : AppColors.surfaceDim,
+                    foregroundColor: lgService.isConnected ? AppColors.onPrimary : AppColors.onSurfaceVariant,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: lgService.isConnected ? () async {
+                    Navigator.of(context).pop();
+                    await _sendBuildingOrbitToLG(building, lgService);
+                  } : null,
+                  icon: Icon(Icons.rotate_right, size: 16),
+                  label: Text('Start Orbit'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: lgService.isConnected ? AppColors.secondary : AppColors.surfaceDim,
+                    foregroundColor: lgService.isConnected ? AppColors.onSecondary : AppColors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<LGService>(
@@ -235,7 +522,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
       controller: _tabController,
       children: [
         // Statistics Tab
-        _buildStatisticsTab(),
+        _buildStatisticsTab(lgService),
 
         // Buildings Tab
         _buildBuildingsTab(),
@@ -246,7 +533,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
     );
   }
 
-  Widget _buildStatisticsTab() {
+  Widget _buildStatisticsTab(LGService lgService) {
     return SingleChildScrollView(
       padding: EdgeInsets.all(16),
       child: Column(
@@ -343,7 +630,6 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
             },
           ),
 
-
           SizedBox(height: 24),
 
           // Confidence Distribution
@@ -360,34 +646,43 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
 
           SizedBox(height: 24),
 
-          // Historical changes button - FULL WIDTH inside scroll view
-          SizedBox(
+          // ORBIT BUTTON - Full width in Statistics tab
+          Container(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () async {
-                final lgService = Provider.of<LGService>(context, listen: false);
-                await lgService.sendTestKML(1);
-              },
+            child: ElevatedButton.icon(
+              onPressed: lgService.isConnected ? () => _sendRegionOrbitToLG(lgService) : null,
+              icon: Icon(Icons.rotate_right, size: 20),
+              label: Text('Start 360° Region Orbit'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.secondaryContainer,
-                foregroundColor: AppColors.onSecondaryContainer,
-                padding: EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: lgService.isConnected ? AppColors.secondary : AppColors.surfaceDim,
+                foregroundColor: lgService.isConnected ? AppColors.onSecondary : AppColors.onSurfaceVariant,
+                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: AppColors.outlineVariant),
                 ),
-              ),
-              child: Text(
-                'Visualize historical changes over time',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
+                elevation: lgService.isConnected ? 2 : 0,
               ),
             ),
           ),
 
-          SizedBox(height: 16), // Bottom padding
+          if (!lgService.isConnected) ...[
+            SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.info_outline, size: 16, color: AppColors.onSurfaceVariant),
+                SizedBox(width: 4),
+                Text(
+                  'Connect to Liquid Galaxy to start orbit',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.onSurfaceVariant,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -687,7 +982,6 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
     );
   }
 
-
   Widget _buildInfoRow(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -943,14 +1237,14 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // View on map button
+            // View/Info button (eye icon) - opens dialog with orbit button
             IconButton(
-              onPressed: () => widget.onBuildingTap(building),
+              onPressed: () => _showBuildingInfoDialog(building),
               icon: const Icon(Icons.visibility, size: 20),
-              tooltip: 'View on map',
+              tooltip: 'View details',
               style: IconButton.styleFrom(
-                backgroundColor: AppColors.primary.withOpacity(0.1),
-                foregroundColor: AppColors.primary,
+                backgroundColor: AppColors.secondary.withOpacity(0.1),
+                foregroundColor: AppColors.secondary,
               ),
             ),
             const SizedBox(width: 4),
@@ -980,11 +1274,9 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
         onTap: () => widget.onBuildingTap(building),
       ),
     );
-
   }
 
-  // Add this method to create an info panel for the rightmost screen:
-
+  // Create an info panel for the rightmost screen
   String _createBuildingInfoPanel(BuildingData building) {
     final center = _calculateBuildingCenter(building);
     final plusCode = _generatePlusCode(building);
@@ -1003,9 +1295,9 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
     return '''<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
   <Document id="info_panel">
-    <n>Building Information Panel</n>
+    <name>Building Information Panel</name>
     <ScreenOverlay>
-      <n>Building Info</n>
+      <name>Building Info</name>
       <Icon>
         <href>data:text/html,
           <html>
@@ -1162,12 +1454,6 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
 </kml>''';
   }
 
-// Enhanced method to send building with info panel
-
-
-
-
-
   Future<void> _sendIndividualBuildingToLG(BuildingData building, LGService lgService) async {
     try {
       // Show loading indicator
@@ -1175,12 +1461,16 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surface,
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
+              CircularProgressIndicator(color: AppColors.primary),
               SizedBox(width: 16),
-              Text('Sending building to LG...'),
+              Text(
+                'Sending building to LG...',
+                style: TextStyle(color: AppColors.onSurface),
+              ),
             ],
           ),
         ),
@@ -1210,8 +1500,14 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Building sent to Liquid Galaxy with info panel!'),
+            content: Text(
+              'Building sent to Liquid Galaxy with info panel!',
+              style: TextStyle(color: AppColors.onPrimary),
+            ),
             backgroundColor: Colors.green,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -1223,17 +1519,20 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to send building to LG: $e'),
-            backgroundColor: Colors.red,
+            content: Text(
+              'Failed to send building to LG: $e',
+              style: TextStyle(color: AppColors.onError),
+            ),
+            backgroundColor: AppColors.error,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
     }
   }
 
-
-
-  // Replace your current _sendAllBuildingsToLG method with:
   Future<void> _sendAllBuildingsToLG(LGService lgService) async {
     try {
       // Show loading dialog
@@ -1241,16 +1540,20 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
         context: context,
         barrierDismissible: false,
         builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surface,
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(),
+              CircularProgressIndicator(color: AppColors.primary),
               SizedBox(height: 16),
-              Text('Fetching KML for ${widget.buildings.length} buildings...'),
+              Text(
+                'Fetching KML for ${widget.buildings.length} buildings...',
+                style: TextStyle(color: AppColors.onSurface),
+              ),
               SizedBox(height: 8),
               Text(
                 'Loading from server...',
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant),
               ),
             ],
           ),
@@ -1275,8 +1578,14 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('🎉 ${widget.buildings.length} buildings sent to Liquid Galaxy!'),
+            content: Text(
+              '🎉 ${widget.buildings.length} buildings sent to Liquid Galaxy!',
+              style: TextStyle(color: AppColors.onPrimary),
+            ),
             backgroundColor: Colors.green,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
@@ -1286,15 +1595,20 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to send buildings to LG: $e'),
-            backgroundColor: Colors.red,
+            content: Text(
+              'Failed to send buildings to LG: $e',
+              style: TextStyle(color: AppColors.onError),
+            ),
+            backgroundColor: AppColors.error,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         );
       }
     }
   }
 
-  // Add this method to your SelectedRegionBottomSheet class:
   Future<String> _fetchKMLFromAPI() async {
     try {
       // Use the same API endpoint but request KML format
@@ -1333,438 +1647,12 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
     }
   }
 
-// Add this helper method to calculate region center:
   LatLng _calculateRegionCenter() {
     final bounds = widget.selectedOverlay.bounds;
     final centerLat = (bounds.northEast.latitude + bounds.southWest.latitude) / 2;
     final centerLng = (bounds.northEast.longitude + bounds.southWest.longitude) / 2;
     return LatLng(centerLat, centerLng);
   }
-
-  // Add this method to create the rightmost screen info panel:
-
-  String _createRightmostInfoPanel(List<BuildingData> buildings, {BuildingData? selectedBuilding}) {
-    // Calculate statistics
-    final totalBuildings = buildings.length;
-    final averageArea = _getAverageArea();
-    final averageConfidence = _getAverageConfidence();
-    final regionArea = _getRegionArea();
-    final buildingDensity = _getBuildingDensity();
-
-    // If a specific building is selected, show its details
-    String selectedBuildingInfo = '';
-    if (selectedBuilding != null) {
-      final center = _calculateBuildingCenter(selectedBuilding);
-      final plusCode = _generatePlusCode(selectedBuilding);
-
-      selectedBuildingInfo = '''
-      <div class="selected-building">
-        <div class="selected-header">🎯 Selected Building</div>
-        <div class="selected-content">
-          <div class="plus-code">${plusCode}</div>
-          <div class="building-stats">
-            <div class="stat-row">
-              <span class="stat-label">Area:</span>
-              <span class="stat-value">${selectedBuilding.area.toStringAsFixed(0)} m²</span>
-            </div>
-            <div class="stat-row">
-              <span class="stat-label">Confidence:</span>
-              <span class="stat-value confidence-${selectedBuilding.confidenceScore > 0.8 ? 'high' : selectedBuilding.confidenceScore > 0.5 ? 'medium' : 'low'}">${(selectedBuilding.confidenceScore * 100).toStringAsFixed(1)}%</span>
-            </div>
-            <div class="stat-row">
-              <span class="stat-label">Complexity:</span>
-              <span class="stat-value">${selectedBuilding.polygonPoints.length} points</span>
-            </div>
-            <div class="stat-row">
-              <span class="stat-label">Center:</span>
-              <span class="stat-value coordinates">${center.latitude.toStringAsFixed(6)}, ${center.longitude.toStringAsFixed(6)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    ''';
-    }
-
-    return '''<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2">
-  <Document id="building_info_panel">
-    <name>Building Information Panel</name>
-    <ScreenOverlay>
-      <name>Building Info</name>
-      <Icon>
-        <href>data:text/html,
-          <html>
-            <head>
-              <style>
-                body {
-                  font-family: 'Segoe UI', Arial, sans-serif;
-                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                  color: white;
-                  margin: 0;
-                  padding: 20px;
-                  width: 350px;
-                  height: 600px;
-                  box-sizing: border-box;
-                  overflow-y: auto;
-                }
-                
-                .header {
-                  text-align: center;
-                  border-bottom: 2px solid rgba(255,255,255,0.3);
-                  padding-bottom: 15px;
-                  margin-bottom: 20px;
-                }
-                
-                .title {
-                  font-size: 22px;
-                  font-weight: bold;
-                  margin: 0;
-                  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-                }
-                
-                .subtitle {
-                  font-size: 12px;
-                  opacity: 0.9;
-                  margin: 5px 0 0 0;
-                }
-                
-                .selected-building {
-                  background: rgba(255,255,255,0.2);
-                  border-radius: 12px;
-                  padding: 15px;
-                  margin-bottom: 20px;
-                  border: 2px solid rgba(255,255,255,0.3);
-                  animation: pulse 2s infinite;
-                }
-                
-                @keyframes pulse {
-                  0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
-                  70% { box-shadow: 0 0 0 10px rgba(255,255,255,0); }
-                  100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
-                }
-                
-                .selected-header {
-                  font-size: 16px;
-                  font-weight: bold;
-                  margin-bottom: 10px;
-                  text-align: center;
-                }
-                
-                .plus-code {
-                  font-family: 'Courier New', monospace;
-                  font-size: 18px;
-                  background: rgba(0,0,0,0.3);
-                  padding: 8px;
-                  border-radius: 6px;
-                  text-align: center;
-                  margin-bottom: 15px;
-                  letter-spacing: 2px;
-                  border: 1px solid rgba(255,255,255,0.2);
-                }
-                
-                .stat-row {
-                  display: flex;
-                  justify-content: space-between;
-                  margin: 8px 0;
-                  padding: 5px 0;
-                  border-bottom: 1px solid rgba(255,255,255,0.1);
-                }
-                
-                .stat-label {
-                  font-size: 12px;
-                  opacity: 0.8;
-                  text-transform: uppercase;
-                  letter-spacing: 1px;
-                }
-                
-                .stat-value {
-                  font-weight: bold;
-                  font-size: 13px;
-                }
-                
-                .coordinates {
-                  font-family: 'Courier New', monospace;
-                  font-size: 11px;
-                }
-                
-                .confidence-high { color: #4CAF50; }
-                .confidence-medium { color: #FF9800; }
-                .confidence-low { color: #F44336; }
-                
-                .stats-grid {
-                  display: grid;
-                  grid-template-columns: 1fr 1fr;
-                  gap: 12px;
-                  margin-bottom: 20px;
-                }
-                
-                .stat-card {
-                  background: rgba(255,255,255,0.15);
-                  padding: 12px;
-                  border-radius: 8px;
-                  text-align: center;
-                  border: 1px solid rgba(255,255,255,0.2);
-                }
-                
-                .stat-number {
-                  font-size: 20px;
-                  font-weight: bold;
-                  display: block;
-                  margin-bottom: 5px;
-                }
-                
-                .stat-label-card {
-                  font-size: 10px;
-                  opacity: 0.8;
-                  text-transform: uppercase;
-                  letter-spacing: 1px;
-                }
-                
-                .info-section {
-                  background: rgba(255,255,255,0.1);
-                  padding: 15px;
-                  border-radius: 8px;
-                  margin-bottom: 15px;
-                  border: 1px solid rgba(255,255,255,0.2);
-                }
-                
-                .section-title {
-                  font-size: 14px;
-                  font-weight: bold;
-                  margin-bottom: 10px;
-                  text-align: center;
-                  color: #FFE082;
-                }
-                
-                .footer {
-                  text-align: center;
-                  font-size: 10px;
-                  opacity: 0.7;
-                  margin-top: 20px;
-                  padding-top: 15px;
-                  border-top: 1px solid rgba(255,255,255,0.2);
-                }
-              </style>
-            </head>
-            <body>
-              <div class="header">
-                <h1 class="title">🏙️ Building Analysis</h1>
-                <p class="subtitle">Region Overview & Selection</p>
-              </div>
-              
-              ${selectedBuildingInfo.isNotEmpty ? selectedBuildingInfo : '<div class="info-section"><div class="section-title">📍 Click a building to view details</div><p style="text-align: center; opacity: 0.7; font-size: 12px;">Select any building polygon to see detailed information here</p></div>'}
-              
-              <div class="info-section">
-                <div class="section-title">📊 Regional Statistics</div>
-                <div class="stats-grid">
-                  <div class="stat-card">
-                    <span class="stat-number">$totalBuildings</span>
-                    <span class="stat-label-card">Total Buildings</span>
-                  </div>
-                  <div class="stat-card">
-                    <span class="stat-number">${averageArea.toStringAsFixed(0)}</span>
-                    <span class="stat-label-card">Avg Area (m²)</span>
-                  </div>
-                  <div class="stat-card">
-                    <span class="stat-number">${averageConfidence.toStringAsFixed(1)}%</span>
-                    <span class="stat-label-card">Avg Confidence</span>
-                  </div>
-                  <div class="stat-card">
-                    <span class="stat-number">${buildingDensity.toStringAsFixed(1)}</span>
-                    <span class="stat-label-card">Buildings/km²</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div class="info-section">
-                <div class="section-title">🌍 Coverage Details</div>
-                <div class="stat-row">
-                  <span class="stat-label">Region Size</span>
-                  <span class="stat-value">${regionArea.toStringAsFixed(2)} km²</span>
-                </div>
-                <div class="stat-row">
-                  <span class="stat-label">Data Source</span>
-                  <span class="stat-value">Google Open Buildings</span>
-                </div>
-                <div class="stat-row">
-                  <span class="stat-label">Building Density</span>
-                  <span class="stat-value">${buildingDensity.toStringAsFixed(1)}/km²</span>
-                </div>
-              </div>
-              
-              <div class="footer">
-                🌍 Visualized on Liquid Galaxy<br>
-                📊 Live Building Data Analysis
-              </div>
-            </body>
-          </html>
-        </href>
-      </Icon>
-      <overlayXY x="1" y="1" xunits="fraction" yunits="fraction"/>
-      <screenXY x="0.98" y="0.98" xunits="fraction" yunits="fraction"/>
-      <size x="0" y="0" xunits="fraction" yunits="fraction"/>
-    </ScreenOverlay>
-  </Document>
-</kml>''';
-  }
-
-
-  // Add these methods to your SelectedRegionBottomSheet class:
-
-// Create KML for all buildings in the region
-  // Replace your _createBulkBuildingsKML method with this fixed version:
-
-  String _createBulkBuildingsKML(List<BuildingData> buildings) {
-    final StringBuffer kmlBuffer = StringBuffer();
-
-    // KML Header
-    kmlBuffer.write('''<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
-  <Document id="bulk_buildings_${DateTime.now().millisecondsSinceEpoch}">
-    <name>Regional Building Analysis</name>
-    <description>
-      <![CDATA[
-        <h3>📊 Regional Building Footprints</h3>
-        <p><strong>Total Buildings:</strong> ${buildings.length}</p>
-        <p><strong>Average Area:</strong> ${_getAverageArea().toStringAsFixed(0)} m²</p>
-        <p><strong>Data Source:</strong> Google Open Buildings</p>
-      ]]>
-    </description>
-    <open>1</open>
-    
-    <!-- FIXED: Shared Styles with Proper Colors -->
-    <Style id="building_high_confidence">
-      <LineStyle>
-        <color>ff00ff00</color>
-        <width>2</width>
-      </LineStyle>
-      <PolyStyle>
-        <color>4d00ff00</color>
-        <fill>1</fill>
-        <outline>1</outline>
-      </PolyStyle>
-    </Style>
-    
-    <Style id="building_medium_confidence">
-      <LineStyle>
-        <color>ff00aaff</color>
-        <width>2</width>
-      </LineStyle>
-      <PolyStyle>
-        <color>4d00aaff</color>
-        <fill>1</fill>
-        <outline>1</outline>
-      </PolyStyle>
-    </Style>
-    
-    <Style id="building_low_confidence">
-      <LineStyle>
-        <color>ff0000ff</color>
-        <width>2</width>
-      </LineStyle>
-      <PolyStyle>
-        <color>4d0000ff</color>
-        <fill>1</fill>
-        <outline>1</outline>
-      </PolyStyle>
-    </Style>
-    
-    <!-- High Confidence Buildings Folder -->
-    <Folder>
-      <name>🟢 High Confidence Buildings (>80%)</name>
-      <open>1</open>
-''');
-
-    // Group buildings by confidence for better organization
-    final highConfidenceBuildings = buildings.where((b) => b.confidenceScore > 0.8).toList();
-    final mediumConfidenceBuildings = buildings.where((b) => b.confidenceScore > 0.5 && b.confidenceScore <= 0.8).toList();
-    final lowConfidenceBuildings = buildings.where((b) => b.confidenceScore <= 0.5).toList();
-
-    // Add high confidence buildings
-    for (int i = 0; i < highConfidenceBuildings.length; i++) {
-      kmlBuffer.write(_createBuildingPlacemark(highConfidenceBuildings[i], i + 1, 'building_high_confidence'));
-    }
-
-    kmlBuffer.write('''
-    </Folder>
-    
-    <!-- Medium Confidence Buildings Folder -->
-    <Folder>
-      <name>🟡 Medium Confidence Buildings (50-80%)</name>
-      <open>0</open>
-''');
-
-    // Add medium confidence buildings
-    for (int i = 0; i < mediumConfidenceBuildings.length; i++) {
-      kmlBuffer.write(_createBuildingPlacemark(mediumConfidenceBuildings[i], i + 1, 'building_medium_confidence'));
-    }
-
-    kmlBuffer.write('''
-    </Folder>
-    
-    <!-- Low Confidence Buildings Folder -->
-    <Folder>
-      <name>🔴 Low Confidence Buildings (<50%)</name>
-      <open>0</open>
-''');
-
-    // Add low confidence buildings
-    for (int i = 0; i < lowConfidenceBuildings.length; i++) {
-      kmlBuffer.write(_createBuildingPlacemark(lowConfidenceBuildings[i], i + 1, 'building_low_confidence'));
-    }
-
-    kmlBuffer.write('''
-    </Folder>
-  </Document>
-</kml>''');
-
-    return kmlBuffer.toString();
-  }
-
-// Create a single building placemark (optimized for bulk operations)
-  String _createBuildingPlacemark(BuildingData building, int index, String styleId) {
-    final center = _calculateBuildingCenter(building);
-    final plusCode = _generatePlusCode(building);
-
-    // Create coordinates string for the polygon
-    String coordinates = building.polygonPoints
-        .map((point) => '${point.longitude},${point.latitude},0')
-        .join(' ');
-
-    // Close the polygon
-    if (building.polygonPoints.isNotEmpty) {
-      final firstPoint = building.polygonPoints.first;
-      coordinates += ' ${firstPoint.longitude},${firstPoint.latitude},0';
-    }
-
-    return '''
-      <Placemark>
-        <name>$plusCode</name>
-        <description>
-          <![CDATA[
-            <table style="font-family: Arial; font-size: 12px;">
-              <tr><td><b>Plus Code:</b></td><td>$plusCode</td></tr>
-              <tr><td><b>Area:</b></td><td>${building.area.toStringAsFixed(0)} m²</td></tr>
-              <tr><td><b>Confidence:</b></td><td>${(building.confidenceScore * 100).toStringAsFixed(1)}%</td></tr>
-              <tr><td><b>Points:</b></td><td>${building.polygonPoints.length}</td></tr>
-            </table>
-          ]]>
-        </description>
-        <styleUrl>#$styleId</styleUrl>
-        <Polygon>
-          <extrude>0</extrude>
-          <altitudeMode>clampToGround</altitudeMode>
-          <outerBoundaryIs>
-            <LinearRing>
-              <coordinates>$coordinates</coordinates>
-            </LinearRing>
-          </outerBoundaryIs>
-        </Polygon>
-      </Placemark>
-''';
-  }
-
-  // Create KML for individual building
 
   String _createIndividualBuildingKML(BuildingData building) {
     final center = _calculateBuildingCenter(building);
@@ -1868,10 +1756,10 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
     return '''<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
   <Document id="building_${DateTime.now().millisecondsSinceEpoch}">
-    <name>Building: $plusCode</name>
+    <n>Building: $plusCode</n>
     <open>1</open>
     <Folder>
-      <name>Building Visualization</name>
+      <n>Building Visualization</n>
       <open>1</open>
       $buildingPlacemark
       $centerMarker
@@ -1906,6 +1794,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -1913,7 +1802,10 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
             children: [
               Icon(Icons.cloud_off, color: Colors.orange),
               SizedBox(width: 8),
-              Text('Liquid Galaxy Not Connected'),
+              Text(
+                'Liquid Galaxy Not Connected',
+                style: TextStyle(color: AppColors.onSurface),
+              ),
             ],
           ),
           content: Column(
@@ -1922,7 +1814,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
             children: [
               Text(
                 'To send building data to Liquid Galaxy, you need to establish a connection first.',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 16, color: AppColors.onSurface),
               ),
               SizedBox(height: 16),
               Container(
@@ -1952,7 +1844,10 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.onSurface),
+              ),
             ),
             ElevatedButton.icon(
               onPressed: () {
@@ -1967,8 +1862,8 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
               icon: Icon(Icons.settings, size: 16),
               label: Text('Open Settings'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.onPrimary,
               ),
             ),
           ],
