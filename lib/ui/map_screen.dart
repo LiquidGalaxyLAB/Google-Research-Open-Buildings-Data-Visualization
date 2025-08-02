@@ -16,6 +16,7 @@ import 'package:proofofconceptapp/components/selected_region_bottom_sheet.dart' 
 import '../utils/colors.dart';
 import 'help_screen.dart';
 import '../l10n/app_localizations.dart';
+import '../providers/theme_provider.dart';
 
 class MapScreen extends StatefulWidget {
   @override

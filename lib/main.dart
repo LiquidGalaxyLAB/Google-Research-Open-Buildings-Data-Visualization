@@ -9,6 +9,8 @@ import 'ui/map_screen.dart';
 import 'services/lg_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'providers/language_provider.dart';
+import 'providers/theme_provider.dart';
+import 'utils/colors.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,15 +33,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // CHANGED: Use MultiProvider instead of single ChangeNotifierProvider
+    // UPDATED: Added ThemeProvider to MultiProvider
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<LGService>.value(value: lgService),
-        ChangeNotifierProvider(create: (_) => LanguageProvider()), // ADD THIS
+        ChangeNotifierProvider(create: (_) => LanguageProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()), // ADD THIS
       ],
-      // ADD THIS: Wrap with Consumer to make app respond to language changes
-      child: Consumer<LanguageProvider>(
-        builder: (context, languageProvider, child) {
+      // UPDATED: Wrap with both Consumers to respond to language and theme changes
+      child: Consumer2<LanguageProvider, ThemeProvider>(
+        builder: (context, languageProvider, themeProvider, child) {
+          // Update AppColors state when theme changes
+          AppColors.updateThemeState(themeProvider.isDarkMode);
+
           return MaterialApp(
             // CHANGED: Add AppLocalizations.delegate (this was missing!)
             localizationsDelegates: const [
@@ -66,10 +72,33 @@ class MyApp extends StatelessWidget {
             ],
 
             title: 'Open Buildings Visualizer',
+
+            // UPDATED: Theme now responds to dark/light mode
             theme: ThemeData(
               primarySwatch: Colors.blue,
+              primaryColor: AppColors.currentPrimary,
+              scaffoldBackgroundColor: AppColors.currentBackground,
+              appBarTheme: AppBarTheme(
+                backgroundColor: AppColors.currentPrimary,
+                foregroundColor: AppColors.currentOnPrimary,
+                elevation: 0,
+              ),
+              elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.currentPrimary,
+                  foregroundColor: AppColors.currentOnPrimary,
+                ),
+              ),
+              cardTheme: CardThemeData(
+                color: AppColors.currentSurface,
+              ),
+              dialogTheme: DialogThemeData(
+                backgroundColor: AppColors.currentSurface,
+              ),
+              brightness: themeProvider.isDarkMode ? Brightness.dark : Brightness.light,
               visualDensity: VisualDensity.adaptivePlatformDensity,
             ),
+
             home: SplashScreen(
               nextScreen: OnboardingWrapper(child: MapScreen()),
               duration: 5,

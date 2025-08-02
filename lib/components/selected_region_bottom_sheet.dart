@@ -7,6 +7,7 @@ import '../services/lg_service.dart';
 import '../ui/settings_screen.dart';
 import '../utils/colors.dart';
 import 'package:http/http.dart' as http;
+import '../providers/theme_provider.dart';
 
 
 
@@ -906,18 +907,19 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
   }
 
   Widget _buildConfidenceDistribution() {
-    final highConfidence = widget.buildings.where((b) => b.confidenceScore > 0.8).length;
-    final mediumConfidence = widget.buildings.where((b) => b.confidenceScore > 0.5 && b.confidenceScore <= 0.8).length;
-    final lowConfidence = widget.buildings.where((b) => b.confidenceScore <= 0.5).length;
+
+    final highConfidence = widget.buildings.where((b) => b.confidenceScore >= 0.75).length;
+    final mediumConfidence = widget.buildings.where((b) => b.confidenceScore >= 0.70 && b.confidenceScore < 0.75).length;
+    final lowConfidence = widget.buildings.where((b) => b.confidenceScore >= 0.65 && b.confidenceScore < 0.70).length;
     final total = widget.buildings.length;
 
     return Column(
       children: [
-        _buildConfidenceBar('High (>80%)', highConfidence, total, Colors.green),
+        _buildConfidenceBar('High (≥75%)', highConfidence, total, Colors.green),
         SizedBox(height: 8),
-        _buildConfidenceBar('Medium (50-80%)', mediumConfidence, total, Colors.orange),
+        _buildConfidenceBar('Medium (70-75%)', mediumConfidence, total, Colors.orange),
         SizedBox(height: 8),
-        _buildConfidenceBar('Low (<50%)', lowConfidence, total, Colors.red),
+        _buildConfidenceBar('Low (65-70%)', lowConfidence, total, Colors.red),
       ],
     );
   }
@@ -1135,11 +1137,11 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
   }
 
   Widget _buildBuildingListItem(BuildingData building, String plusCode, int index) {
-    final confidenceColor = building.confidenceScore > 0.8
-        ? Colors.blue
-        : building.confidenceScore > 0.5
-        ? Colors.blue.withOpacity(0.7)
-        : Colors.blue.withOpacity(0.5);
+    final confidenceColor = building.confidenceScore >= 0.75
+        ? Colors.green
+        : building.confidenceScore >= 0.70
+        ? Colors.orange
+        : Colors.red;
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -1284,10 +1286,10 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
     // Determine confidence level text and color
     String confidenceLevel = "High";
     String confidenceColor = "#4CAF50";
-    if (building.confidenceScore <= 0.5) {
+    if (building.confidenceScore < 0.70) {
       confidenceLevel = "Low";
       confidenceColor = "#F44336";
-    } else if (building.confidenceScore <= 0.8) {
+    } else if (building.confidenceScore < 0.75) {
       confidenceLevel = "Medium";
       confidenceColor = "#FF9800";
     }
@@ -1669,14 +1671,14 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
       coordinates += ' ${firstPoint.longitude},${firstPoint.latitude},0';
     }
 
-    // Determine confidence color
-    String confidenceColor = 'ff00ff00'; // Green for high confidence
+    String confidenceColor = 'ff00ff00'; // Green for high confidence (≥75%)
     String markerIcon = 'http://maps.google.com/mapfiles/kml/paddle/grn-circle.png';
-    if (building.confidenceScore <= 0.5) {
-      confidenceColor = 'ff0000ff'; // Red for low confidence
+
+    if (building.confidenceScore < 0.70) {
+      confidenceColor = 'ff0000ff'; // Red for low confidence (65-70%)
       markerIcon = 'http://maps.google.com/mapfiles/kml/paddle/red-circle.png';
-    } else if (building.confidenceScore <= 0.8) {
-      confidenceColor = 'ff00aaff'; // Orange for medium confidence
+    } else if (building.confidenceScore < 0.75) {
+      confidenceColor = 'ff00aaff'; // Orange for medium confidence (70-75%)
       markerIcon = 'http://maps.google.com/mapfiles/kml/paddle/orange-circle.png';
     }
 

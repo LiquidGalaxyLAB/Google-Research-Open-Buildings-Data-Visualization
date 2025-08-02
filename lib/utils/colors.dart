@@ -79,7 +79,54 @@ class AppColors {
   static const Color darkErrorContainer = Color(0xFF93000A);
   static const Color darkOnErrorContainer = Color(0xFFFFDAD6);
 
-  // Helper method to get colors based on theme mode
+  // Current theme-aware getters
+  static Color get currentBackground => _isDarkMode ? darkBackground : background;
+  static Color get currentOnBackground => _isDarkMode ? darkOnBackground : onBackground;
+  static Color get currentSurface => _isDarkMode ? darkSurface : surface;
+  static Color get currentSurfaceDim => _isDarkMode ? darkSurfaceDim : surfaceDim;
+  static Color get currentSurfaceBright => _isDarkMode ? darkSurfaceBright : surfaceBright;
+  static Color get currentSurfaceContainerLowest => _isDarkMode ? darkSurfaceContainerLowest : surfaceContainerLowest;
+  static Color get currentSurfaceContainerLow => _isDarkMode ? darkSurfaceContainerLow : surfaceContainerLow;
+  static Color get currentSurfaceContainer => _isDarkMode ? darkSurfaceContainer : surfaceContainer;
+  static Color get currentSurfaceContainerHigh => _isDarkMode ? darkSurfaceContainerHigh : surfaceContainerHigh;
+  static Color get currentSurfaceContainerHighest => _isDarkMode ? darkSurfaceContainerHighest : surfaceContainerHighest;
+  static Color get currentOnSurface => _isDarkMode ? darkOnSurface : onSurface;
+  static Color get currentSurfaceVariant => _isDarkMode ? darkSurfaceVariant : surfaceVariant;
+  static Color get currentOnSurfaceVariant => _isDarkMode ? darkOnSurfaceVariant : onSurfaceVariant;
+  static Color get currentInverseSurface => _isDarkMode ? darkInverseSurface : inverseSurface;
+  static Color get currentInverseOnSurface => _isDarkMode ? darkInverseOnSurface : inverseOnSurface;
+  static Color get currentOutline => _isDarkMode ? darkOutline : outline;
+  static Color get currentOutlineVariant => _isDarkMode ? darkOutlineVariant : outlineVariant;
+  static Color get currentShadow => _isDarkMode ? darkShadow : shadow;
+  static Color get currentScrim => _isDarkMode ? darkScrim : scrim;
+  static Color get currentSurfaceTint => _isDarkMode ? darkSurfaceTint : surfaceTint;
+  static Color get currentPrimary => _isDarkMode ? darkPrimary : primary;
+  static Color get currentOnPrimary => _isDarkMode ? darkOnPrimary : onPrimary;
+  static Color get currentPrimaryContainer => _isDarkMode ? darkPrimaryContainer : primaryContainer;
+  static Color get currentOnPrimaryContainer => _isDarkMode ? darkOnPrimaryContainer : onPrimaryContainer;
+  static Color get currentInversePrimary => _isDarkMode ? darkInversePrimary : inversePrimary;
+  static Color get currentSecondary => _isDarkMode ? darkSecondary : secondary;
+  static Color get currentOnSecondary => _isDarkMode ? darkOnSecondary : onSecondary;
+  static Color get currentSecondaryContainer => _isDarkMode ? darkSecondaryContainer : secondaryContainer;
+  static Color get currentOnSecondaryContainer => _isDarkMode ? darkOnSecondaryContainer : onSecondaryContainer;
+  static Color get currentTertiary => _isDarkMode ? darkTertiary : tertiary;
+  static Color get currentOnTertiary => _isDarkMode ? darkOnTertiary : onTertiary;
+  static Color get currentTertiaryContainer => _isDarkMode ? darkTertiaryContainer : tertiaryContainer;
+  static Color get currentOnTertiaryContainer => _isDarkMode ? darkOnTertiaryContainer : onTertiaryContainer;
+  static Color get currentError => _isDarkMode ? darkError : error;
+  static Color get currentOnError => _isDarkMode ? darkOnError : onError;
+  static Color get currentErrorContainer => _isDarkMode ? darkErrorContainer : errorContainer;
+  static Color get currentOnErrorContainer => _isDarkMode ? darkOnErrorContainer : onErrorContainer;
+
+  // Private variable to track current theme state
+  static bool _isDarkMode = false;
+
+  // Method to update theme state
+  static void updateThemeState(bool isDark) {
+    _isDarkMode = isDark;
+  }
+
+  // Legacy helper methods to get colors based on theme mode
   static Color getBackground(bool isDark) => isDark ? darkBackground : background;
   static Color getOnBackground(bool isDark) => isDark ? darkOnBackground : onBackground;
   static Color getSurface(bool isDark) => isDark ? darkSurface : surface;

@@ -12,7 +12,7 @@ import '../components/language_selector.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/colors.dart';
 import '../services/lg_service.dart';
-import '../providers/language_provider.dart';
+import '../providers/theme_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -57,16 +57,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
           ),
-          _buildSettingsItem(
-            icon: Icons.visibility_outlined,
-            title: localizations.settings_visualization,  // CHANGED
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const VisualizationSettingsScreen(),
-              ),
-            ),
-          ),
+
           _buildSettingsItem(
             icon: Icons.data_usage_outlined,
             title: localizations.settings_data,  // CHANGED
@@ -156,43 +147,51 @@ class _LiquidGalaxyConfigScreenState extends State<LiquidGalaxyConfigScreen> wit
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+    final localizations = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.primary,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppColors.onPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          localizations.lg_config_title,  // CHANGED: 'Liquid Galaxy Configuration' → localized
-          style: TextStyle(
-            color: AppColors.onPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: AppColors.onPrimary,
-          labelColor: AppColors.onPrimary,
-          unselectedLabelColor: AppColors.onPrimary.withOpacity(0.7),
-          tabs: [
-            Tab(text: localizations.lg_config_connection_tab),  // CHANGED: 'Connection' → localized
-            Tab(text: localizations.lg_config_lg_tab),          // CHANGED: 'Liquid Galaxy' → localized
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildConnectionTab(),
-          _buildLiquidGalaxyTab(),
-        ],
-      ),
-    );
+    return Consumer<ThemeProvider>(
+        builder: (context, themeProvider, child) {
+          AppColors.updateThemeState(themeProvider.isDarkMode);
+
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              backgroundColor: AppColors.primary,
+              elevation: 0,
+              leading: IconButton(
+                icon: Icon(Icons.arrow_back, color: AppColors.onPrimary),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              title: Text(
+                localizations.lg_config_title,
+                // CHANGED: 'Liquid Galaxy Configuration' → localized
+                style: TextStyle(
+                  color: AppColors.onPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              bottom: TabBar(
+                controller: _tabController,
+                indicatorColor: AppColors.onPrimary,
+                labelColor: AppColors.onPrimary,
+                unselectedLabelColor: AppColors.onPrimary.withOpacity(0.7),
+                tabs: [
+                  Tab(text: localizations.lg_config_connection_tab),
+                  // CHANGED: 'Connection' → localized
+                  Tab(text: localizations.lg_config_lg_tab),
+                  // CHANGED: 'Liquid Galaxy' → localized
+                ],
+              ),
+            ),
+            body: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildConnectionTab(),
+                _buildLiquidGalaxyTab(),
+              ],
+            ),
+          );
+        },);
   }
 
   Widget _buildConnectionTab() {
@@ -1071,6 +1070,37 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
     });
   }
 
+
+  Widget _buildThemeToggle() {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Dark Mode',
+              style: TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.w400,
+                color: AppColors.currentOnSurface,
+              ),
+            ),
+            Switch(
+              value: themeProvider.isDarkMode,
+              onChanged: (value) {
+                themeProvider.toggleTheme();
+              },
+              activeColor: AppColors.currentPrimary,
+              activeTrackColor: AppColors.currentPrimary.withOpacity(0.3),
+              inactiveThumbColor: AppColors.currentOutline,
+              inactiveTrackColor: AppColors.currentOutlineVariant,
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _savePreferences() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('auto_refresh_data', _autoRefreshData);
@@ -1079,7 +1109,7 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+    final localizations = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -1091,7 +1121,7 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          localizations.data_settings_title,  // CHANGED: 'Data Settings' → localized
+          localizations.data_settings_title,
           style: TextStyle(
             color: AppColors.onPrimary,
             fontWeight: FontWeight.w600,
@@ -1115,6 +1145,11 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
                 _savePreferences();
               },
             ),
+
+            const SizedBox(height: 16.0),
+
+            _buildThemeToggle(),
+
             const SizedBox(height: 16.0),
           ],
         ),
@@ -1127,7 +1162,7 @@ class _DataSettingsScreenState extends State<DataSettingsScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          title,  // This is already localized from calling function
+          title,
           style: TextStyle(
             fontSize: 16.0,
             fontWeight: FontWeight.w400,

@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
 import '../l10n/app_localizations.dart';
 import '../utils/colors.dart';
-
+import '../providers/theme_provider.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final Widget homeScreen;
@@ -18,23 +18,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   PageController _pageController = PageController();
   int currentIndex = 0;
 
-  // CHANGED: Make this a getter that uses localized strings
+
   List<OnboardingData> get onboardingPages {
     final localizations = AppLocalizations.of(context)!;
     return [
       OnboardingData(
-        title: localizations.onboarding_lg_integration_title,      // CHANGED: Localized
-        description: localizations.onboarding_lg_integration_description,  // CHANGED: Localized
+        title: localizations.onboarding_lg_integration_title,
+        description: localizations.onboarding_lg_integration_description,
         imagePath: "assets/logos/lg_logo.png",
       ),
       OnboardingData(
-        title: localizations.onboarding_explorer_title,           // CHANGED: Localized
-        description: localizations.onboarding_explorer_description,     // CHANGED: Localized
+        title: localizations.onboarding_explorer_title,
+        description: localizations.onboarding_explorer_description,
         imagePath: "assets/logos/gsoc_logo.png",
       ),
       OnboardingData(
-        title: localizations.onboarding_interactive_map_title,    // CHANGED: Localized
-        description: localizations.onboarding_interactive_map_description,  // CHANGED: Localized
+        title: localizations.onboarding_interactive_map_title,
+        description: localizations.onboarding_interactive_map_description,
         imagePath: "assets/logos/logo.png",
       ),
     ];
@@ -42,7 +42,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;  // ADD THIS
+    final localizations = AppLocalizations.of(context)!;
     final screenSize = MediaQuery.of(context).size;
     final screenHeight = screenSize.height;
     final screenWidth = screenSize.width;
