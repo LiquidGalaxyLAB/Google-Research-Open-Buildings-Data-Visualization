@@ -1458,7 +1458,7 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
 
   Future<void> _sendIndividualBuildingToLG(BuildingData building, LGService lgService) async {
     try {
-      // Show loading indicator
+      // Show loading indicator (keep as is)
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -1478,32 +1478,29 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
         ),
       );
 
-      // Create enhanced building KML with both polygon and marker
+      // Create building KML (keep existing)
       String buildingKML = _createIndividualBuildingKML(building);
-
-      // Create info panel KML for rightmost screen
-      String infoPanelKML = _createBuildingInfoPanel(building);
-
-      // Get building center coordinates
       final center = _calculateBuildingCenter(building);
 
-      // Send both the building visualization and info panel
-      await lgService.sendBuildingWithInfoPanel(
-          buildingKML,
-          infoPanelKML,
-          center.latitude,
-          center.longitude
+      // Send building to main screen using existing method
+      await lgService.sendBuildingToLG(buildingKML, center.latitude, center.longitude);
+
+      // **NEW**: Set the building dashboard on rightmost screen (like setLogo)
+      await lgService.setBuildingDashboard(
+          building,
+          _calculateBuildingCenter,
+          _generatePlusCode
       );
 
-      // Close loading dialog
+      // Close loading dialog (keep as is)
       if (mounted) Navigator.of(context).pop();
 
-      // Show success message
+      // Show success message (keep as is)
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'Building sent to Liquid Galaxy with info panel!',
+              'Building sent to Liquid Galaxy with dashboard panel!', // Updated message
               style: TextStyle(color: AppColors.onPrimary),
             ),
             backgroundColor: Colors.green,
@@ -1514,10 +1511,9 @@ class _SelectedRegionBottomSheetState extends State<SelectedRegionBottomSheet>
         );
       }
     } catch (e) {
-      // Close loading dialog
+      // Error handling (keep as is)
       if (mounted) Navigator.of(context).pop();
 
-      // Show error message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
