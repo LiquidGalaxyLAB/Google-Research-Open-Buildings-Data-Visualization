@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
+import '../l10n/app_localizations.dart';
+import '../utils/colors.dart';
+import '../providers/theme_provider.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final Widget homeScreen;
@@ -15,55 +18,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   PageController _pageController = PageController();
   int currentIndex = 0;
 
-  final List<OnboardingData> onboardingPages = [
-    OnboardingData(
-      title: "Liquid Galaxy Integration",
-      description: "Send building data to Liquid Galaxy for immersive visualization experience",
-      icon: Icons.integration_instructions,
-      colors: [Colors.blue, Colors.red, Colors.orange, Colors.blue, Colors.green],
-    ),
-    OnboardingData(
-      title: "Liquid Galaxy Open Buildings Explorer",
-      description: "Explore building footprints across the globe with interactive visualization",
-      icon: Icons.explore,
-      colors: [Colors.blue, Colors.red, Colors.orange, Colors.blue, Colors.green],
-      hasSecondaryIcon: true,
-    ),
-    OnboardingData(
-      title: "Interactive Map",
-      description: "Select regions to visualize building density and footprints in real-time",
-      icon: Icons.map,
-      colors: [Colors.blue, Colors.red, Colors.orange, Colors.blue, Colors.green],
-      hasSecondaryIcon: true,
-    ),
-  ];
+
+  List<OnboardingData> get onboardingPages {
+    final localizations = AppLocalizations.of(context)!;
+    return [
+      OnboardingData(
+        title: localizations.onboarding_lg_integration_title,
+        description: localizations.onboarding_lg_integration_description,
+        imagePath: "assets/logos/lg_logo.png",
+      ),
+      OnboardingData(
+        title: localizations.onboarding_explorer_title,
+        description: localizations.onboarding_explorer_description,
+        imagePath: "assets/logos/gsoc_logo.png",
+      ),
+      OnboardingData(
+        title: localizations.onboarding_interactive_map_title,
+        description: localizations.onboarding_interactive_map_description,
+        imagePath: "assets/logos/logo.png",
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+    final screenSize = MediaQuery.of(context).size;
+    final screenHeight = screenSize.height;
+    final screenWidth = screenSize.width;
+
     return Scaffold(
-      backgroundColor: Color(0xFFF5F5F7),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            // Status bar area
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "9:30",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                  ),
-
-                ],
-              ),
-            ),
-
             // Main content
             Expanded(
               child: PageView.builder(
@@ -84,7 +72,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
             // Bottom section with indicators and button
             Container(
-              padding: EdgeInsets.all(20),
+              padding: EdgeInsets.all(screenWidth * 0.05),
               child: Column(
                 children: [
                   // Page indicators
@@ -93,25 +81,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     children: List.generate(
                       onboardingPages.length,
                           (index) => Container(
-                        margin: EdgeInsets.symmetric(horizontal: 4),
-                        width: currentIndex == index ? 24 : 8,
-                        height: 8,
+                        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.01),
+                        width: currentIndex == index ? screenWidth * 0.06 : screenWidth * 0.02,
+                        height: screenHeight * 0.01,
                         decoration: BoxDecoration(
                           color: currentIndex == index
-                              ? Colors.blue
-                              : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(4),
+                              ? AppColors.primary
+                              : AppColors.outlineVariant,
+                          borderRadius: BorderRadius.circular(screenWidth * 0.01),
                         ),
                       ),
                     ),
                   ),
 
-                  SizedBox(height: 30),
+                  SizedBox(height: screenHeight * 0.035),
 
                   // Action button
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: screenHeight * 0.06,
                     child: ElevatedButton(
                       onPressed: () {
                         if (currentIndex == onboardingPages.length - 1) {
@@ -124,36 +112,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.onPrimary,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(screenWidth * 0.02),
                         ),
                         elevation: 0,
                       ),
                       child: Text(
                         currentIndex == onboardingPages.length - 1
-                            ? "Get Started"
-                            : "Next",
+                            ? localizations.onboarding_get_started  // CHANGED: Localized
+                            : localizations.onboarding_next,       // CHANGED: Localized
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: screenWidth * 0.04,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ),
 
-                  SizedBox(height: 20),
-
-                  // Home indicator
-                  Container(
-                    width: 134,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(2.5),
-                    ),
-                  ),
+                  SizedBox(height: screenHeight * 0.025),
                 ],
               ),
             ),
@@ -173,7 +151,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 }
-
 // Individual Onboarding Page Widget
 class OnboardingPage extends StatelessWidget {
   final OnboardingData data;
@@ -183,93 +160,35 @@ class OnboardingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    final isSmallScreen = screenSize.height < 700;
+    final screenHeight = screenSize.height;
+    final screenWidth = screenSize.width;
+
+    // Responsive sizing
+    final isSmallScreen = screenHeight < 700;
 
     return Padding(
       padding: EdgeInsets.symmetric(
-        horizontal: screenSize.width * 0.08,
-        vertical: 20,
+        horizontal: screenWidth * 0.08,
+        vertical: screenHeight * 0.025,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Logo and icon section
+          // Logo section
           Flexible(
             flex: 3,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Liquid Galaxy logo
+                // Main logo image
                 Container(
-                  height: isSmallScreen ? 60 : 80,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: data.colors.map((color) {
-                      int index = data.colors.indexOf(color);
-                      return Container(
-                        width: isSmallScreen ? 12 : 16,
-                        height: isSmallScreen ? 50 : 70,
-                        margin: EdgeInsets.symmetric(horizontal: 2),
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        transform: Matrix4.identity()
-                          ..setEntry(3, 2, 0.001)
-                          ..rotateY((index - 2) * 0.2),
-                      );
-                    }).toList(),
+                  width: screenWidth * (isSmallScreen ? 0.4 : 0.5),
+                  height: screenHeight * (isSmallScreen ? 0.2 : 0.25),
+                  child: Image.asset(
+                    data.imagePath,
+                    fit: BoxFit.contain,
                   ),
                 ),
-
-                SizedBox(height: 10),
-
-                Text(
-                  "liquid galaxy",
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 18 : 24,
-                    color: Colors.grey.shade400,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 2,
-                  ),
-                ),
-
-                if (data.hasSecondaryIcon) ...[
-                  SizedBox(height: isSmallScreen ? 20 : 30),
-                  // Secondary icon (star-like shape with code symbol)
-                  Container(
-                    width: isSmallScreen ? 80 : 100,
-                    height: isSmallScreen ? 80 : 100,
-                    decoration: BoxDecoration(
-                      color: Colors.orange,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Star background
-                        CustomPaint(
-                          size: Size(isSmallScreen ? 80 : 100, isSmallScreen ? 80 : 100),
-                          painter: StarPainter(),
-                        ),
-                        // Code icon
-                        Container(
-                          width: isSmallScreen ? 40 : 50,
-                          height: isSmallScreen ? 40 : 50,
-                          decoration: BoxDecoration(
-                            color: Colors.orange.shade800,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.code,
-                            color: Colors.white,
-                            size: isSmallScreen ? 20 : 24,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
@@ -284,21 +203,21 @@ class OnboardingPage extends StatelessWidget {
                   data.title,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: isSmallScreen ? 20 : 26,
+                    fontSize: screenWidth * (isSmallScreen ? 0.05 : 0.065),
                     fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                    color: AppColors.onBackground,
                     height: 1.2,
                   ),
                 ),
 
-                SizedBox(height: isSmallScreen ? 12 : 16),
+                SizedBox(height: screenHeight * (isSmallScreen ? 0.015 : 0.02)),
 
                 Text(
                   data.description,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: isSmallScreen ? 14 : 16,
-                    color: Colors.grey.shade600,
+                    fontSize: screenWidth * (isSmallScreen ? 0.035 : 0.04),
+                    color: AppColors.onSurfaceVariant,
                     height: 1.4,
                   ),
                 ),
@@ -311,53 +230,16 @@ class OnboardingPage extends StatelessWidget {
   }
 }
 
-// Custom painter for star shape
-class StarPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.orange.shade300
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    final center = Offset(size.width / 2, size.height / 2);
-    final outerRadius = size.width / 2;
-    final innerRadius = outerRadius * 0.6;
-
-    for (int i = 0; i < 8; i++) {
-      final angle = (i * 45) * (math.pi / 180);
-      final radius = i.isEven ? outerRadius : innerRadius;
-      final x = center.dx + radius * math.cos(angle);
-      final y = center.dy + radius * math.sin(angle);
-
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 // Data model for onboarding pages
 class OnboardingData {
   final String title;
   final String description;
-  final IconData icon;
-  final List<Color> colors;
-  final bool hasSecondaryIcon;
+  final String imagePath;
 
   OnboardingData({
     required this.title,
     required this.description,
-    required this.icon,
-    required this.colors,
-    this.hasSecondaryIcon = false,
+    required this.imagePath,
   });
 }
 
@@ -395,9 +277,11 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         body: Center(
-          child: CircularProgressIndicator(),
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+          ),
         ),
       );
     }
