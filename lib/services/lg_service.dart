@@ -4,10 +4,13 @@ import 'dart:io';
 import 'package:dartssh2/dartssh2.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../components/selected_region_bottom_sheet.dart';
 import '../entities/screen_overlay_entity.dart';
 import '../entities/kml_entity.dart';
 import 'dart:convert';
 import 'dart:typed_data';
+
+import '../models/building_data.dart';
 
 
 enum LGConnectionStatus {
@@ -62,13 +65,14 @@ class LGService extends ChangeNotifier {
     return (rigs / 2).floor() + 2;
   }
 
+  // Calculate right screen for logo placement
   int get rightScreen {
     final rigs = int.tryParse(_numberOfRigs ?? '3');
     if (rigs == null || rigs <= 0) return 1;
     if (rigs == 1) return 1;
     if (rigs == 2) return 2;
-    // For 3+ rigs, rightmost is the last screen
-    return rigs;
+
+    return rigs - 1;
   }
 
   // Orbit functionality
@@ -193,8 +197,6 @@ class LGService extends ChangeNotifier {
       throw Exception('Failed to send KML to LG: $e');
     }
   }
-
-// Add this method to update the info panel when a building is selected:
 
 
 // Helper method to convert Uint8List to String for reading
@@ -534,6 +536,71 @@ class LGService extends ChangeNotifier {
     }
   }
 
+  // Set building dashboard on rightmost screen (following setLogo pattern)
+  Future<void> setBuildingDashboard(BuildingData building,
+      LatLng Function(BuildingData) calculateCenter,
+      String Function(BuildingData) generatePlusCode) async {
+    try {
+      if (_client == null) {
+        bool connected = await connect();
+        if (!connected) {
+          throw Exception('Failed to establish SSH connection');
+        }
+      }
+
+      // Create screen overlay using the entity with helper functions
+      final screenOverlay = ScreenOverlayEntity.buildingDashboard(
+          building,
+          calculateCenter,
+          generatePlusCode
+      );
+
+      // Rest of the method stays the same...
+      final kmlContent = '''<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+  <Document id="slave_$rightScreen">
+    <name>Building-Dashboard</name>
+    <open>1</open>
+    ${screenOverlay.tag}
+  </Document>
+</kml>''';
+
+      String command = "echo '${kmlContent.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_$rightScreen.kml";
+      await _client!.run(command);
+
+      print('Building dashboard set successfully on screen $rightScreen');
+
+    } catch (e) {
+      print('Failed to set building dashboard: $e');
+      rethrow;
+    }
+  }
+
+// Clean building dashboard from rightmost screen
+  Future<void> cleanBuildingDashboard() async {
+    try {
+      if (_client == null) {
+        bool connected = await connect();
+        if (!connected) {
+          throw Exception('Failed to establish SSH connection');
+        }
+      }
+
+      // Create a proper blank KML document
+      String blankKML = KMLEntity.generateBlank('slave_$rightScreen');
+
+      // Clean the dashboard from the right screen
+      String command = "echo '${blankKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_$rightScreen.kml";
+
+      await _client!.run(command);
+
+      print('Building dashboard cleaned successfully from screen $rightScreen');
+    } catch (e) {
+      print('Failed to clean building dashboard: $e');
+      rethrow;
+    }
+  }
+
   // Clean logo from Liquid Galaxy
   Future<void> cleanLogo() async {
     try {
@@ -602,6 +669,40 @@ class LGService extends ChangeNotifier {
     } catch (e) {
       print('Failed to reset slaves refresh: $e');
       rethrow;
+    }
+  }
+
+  Future<void> cleanAllKML() async {
+    if (_client == null) return;
+
+    try {
+      print('🧹 Cleaning all KML files...');
+
+      // **STEP 1**: Clear query and kmls.txt first
+      await _client!.run('echo "" > /tmp/query.txt');
+      await _client!.run('echo "" > /var/www/html/kmls.txt');
+
+      // **STEP 2**: Wait for Google Earth to process
+      await Future.delayed(Duration(milliseconds: 500));
+
+      // **STEP 3**: Clean all slave files
+      final rigs = int.tryParse(_numberOfRigs ?? '3') ?? 3;
+      for (var i = 1; i <= rigs; i++) {
+        // Remove existing file
+        await _client!.run('rm -f /var/www/html/kml/slave_$i.kml');
+
+        // Create blank KML
+        String blankKML = KMLEntity.generateBlank('slave_$i');
+        String command = "echo '${blankKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_$i.kml";
+        await _client!.run(command);
+      }
+
+      // **STEP 4**: Final verification
+      await Future.delayed(Duration(milliseconds: 300));
+
+      print('✅ All KML files cleaned successfully');
+    } catch (e) {
+      print('❌ Failed to clean KML: $e');
     }
   }
 
