@@ -65,13 +65,14 @@ class LGService extends ChangeNotifier {
     return (rigs / 2).floor() + 2;
   }
 
+  // Calculate right screen for logo placement
   int get rightScreen {
     final rigs = int.tryParse(_numberOfRigs ?? '3');
     if (rigs == null || rigs <= 0) return 1;
     if (rigs == 1) return 1;
     if (rigs == 2) return 2;
-    // For 3+ rigs, rightmost is the last screen
-    return rigs;
+
+    return rigs - 1;
   }
 
   // Orbit functionality
@@ -196,8 +197,6 @@ class LGService extends ChangeNotifier {
       throw Exception('Failed to send KML to LG: $e');
     }
   }
-
-// Add this method to update the info panel when a building is selected:
 
 
 // Helper method to convert Uint8List to String for reading
@@ -670,6 +669,40 @@ class LGService extends ChangeNotifier {
     } catch (e) {
       print('Failed to reset slaves refresh: $e');
       rethrow;
+    }
+  }
+
+  Future<void> cleanAllKML() async {
+    if (_client == null) return;
+
+    try {
+      print('🧹 Cleaning all KML files...');
+
+      // **STEP 1**: Clear query and kmls.txt first
+      await _client!.run('echo "" > /tmp/query.txt');
+      await _client!.run('echo "" > /var/www/html/kmls.txt');
+
+      // **STEP 2**: Wait for Google Earth to process
+      await Future.delayed(Duration(milliseconds: 500));
+
+      // **STEP 3**: Clean all slave files
+      final rigs = int.tryParse(_numberOfRigs ?? '3') ?? 3;
+      for (var i = 1; i <= rigs; i++) {
+        // Remove existing file
+        await _client!.run('rm -f /var/www/html/kml/slave_$i.kml');
+
+        // Create blank KML
+        String blankKML = KMLEntity.generateBlank('slave_$i');
+        String command = "echo '${blankKML.replaceAll("'", "'\\''")}' > /var/www/html/kml/slave_$i.kml";
+        await _client!.run(command);
+      }
+
+      // **STEP 4**: Final verification
+      await Future.delayed(Duration(milliseconds: 300));
+
+      print('✅ All KML files cleaned successfully');
+    } catch (e) {
+      print('❌ Failed to clean KML: $e');
     }
   }
 
