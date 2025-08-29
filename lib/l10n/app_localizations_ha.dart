@@ -9,206 +9,207 @@ class AppLocalizationsHa extends AppLocalizations {
   AppLocalizationsHa([String locale = 'ha']) : super(locale);
 
   @override
-  String get help_title => 'Help';
+  String get help_title => 'Taimako';
 
   @override
-  String get help_app_title => 'Open Buildings Explorer';
+  String get help_app_title => 'Mai Binciken Gine-ginen Buɗaɗɗe';
 
   @override
   String get help_app_description =>
-      'Explore building footprints across the globe with Liquid Galaxy integration';
+      'Bincika alamun gine-gine a duk duniya tare da haɗin Liquid Galaxy';
 
   @override
-  String get help_step1_title => 'Select Map Area';
+  String get help_step1_title => 'Zaɓi Yankin Taswira';
 
   @override
   String get help_step1_description =>
-      'Use the controls on the right side of the map to modify and select the area of tiles you want to explore.';
+      'Yi amfani da sarrafa a gefen dama na taswira don gyara da zaɓi yankin tiles da kake son bincikar.';
 
   @override
-  String get help_step2_title => 'Choose a Tile';
+  String get help_step2_title => 'Zaɓi Tile';
 
   @override
   String get help_step2_description =>
-      'Click on a specific tile within your selected area to fetch building data from the Open Buildings dataset.';
+      'Danna kan wani takamaiman tile a cikin yankin da ka zaɓa don samun bayanan gine-gine daga bayanan Open Buildings.';
 
   @override
-  String get help_step3_title => 'View Results';
+  String get help_step3_title => 'Duba Sakamakon';
 
   @override
   String get help_step3_description =>
-      'Once data is fetched, a bottom sheet will appear showing the results. You can send all data to Liquid Galaxy for visualization.';
+      'Bayan samun bayanan, za a nuna takarda ta ƙasa da ke nuna sakamakon. Za ka iya aika duk bayanan zuwa Liquid Galaxy don gani.';
 
   @override
-  String get help_step4_title => 'Explore Buildings';
+  String get help_step4_title => 'Bincika Gine-gine';
 
   @override
   String get help_step4_description =>
-      'Switch to the Buildings tab to see individual building details, including plus codes and confidence scores.';
+      'Canza zuwa shafin Gine-gine don ganin cikakkun bayanai na kowane gini, har da plus codes da ƙimar amincewa.';
 
   @override
-  String get help_confidence_title => 'About Confidence Scores';
+  String get help_confidence_title => 'Game da Ƙimar Amincewa';
 
   @override
   String get help_confidence_description =>
-      'Each building shows a confidence score that indicates how reliable the data from the Open Buildings dataset is for that particular structure.';
+      'Kowane gini yana nuna ƙimar amincewa da ke nuna yadda bayanan Open Buildings dataset suke da aminci ga wannan tsarin.';
 
   @override
-  String get onboarding_lg_integration_title => 'Liquid Galaxy Integration';
+  String get onboarding_lg_integration_title => 'Haɗin Liquid Galaxy';
 
   @override
   String get onboarding_lg_integration_description =>
-      'Send building data to Liquid Galaxy for immersive visualization experience';
+      'Aika bayanan gine-gine zuwa Liquid Galaxy don ƙwarewar gani mai zurfi';
 
   @override
   String get onboarding_explorer_title =>
-      'Liquid Galaxy Open Buildings Explorer';
+      'Mai Binciken Gine-ginen Buɗaɗɗe na Liquid Galaxy';
 
   @override
   String get onboarding_explorer_description =>
-      'Explore building footprints across the globe with interactive visualization';
+      'Bincika alamun gine-gine a duk duniya tare da gani mai amsawa';
 
   @override
-  String get onboarding_interactive_map_title => 'Interactive Map';
+  String get onboarding_interactive_map_title => 'Taswira Mai Amsawa';
 
   @override
   String get onboarding_interactive_map_description =>
-      'Select regions to visualize building density and footprints in real-time';
+      'Zaɓi yankuna don ganin ƙarfin gine-gine da alamunsu nan take';
 
   @override
-  String get onboarding_get_started => 'Get Started';
+  String get onboarding_get_started => 'Fara';
 
   @override
-  String get onboarding_next => 'Next';
+  String get onboarding_next => 'Na gaba';
 
   @override
-  String get map_title => 'Open Buildings';
+  String get map_title => 'Gine-ginen Buɗaɗɗe';
 
   @override
-  String get map_clear_selection_tooltip => 'Clear building selection';
+  String get map_clear_selection_tooltip => 'Share zaɓin gini';
 
   @override
-  String get map_search_hint => 'Search for a location';
+  String get map_search_hint => 'Nema wuri';
 
   @override
-  String get map_searching => 'Searching...';
+  String get map_searching => 'Ana nema...';
 
   @override
-  String get map_search_no_results => 'No results found';
+  String get map_search_no_results => 'Ba a samu sakamako ba';
 
   @override
-  String get map_search_failed => 'Search failed. Please try again.';
+  String get map_search_failed => 'Binciken ya kasa. Ka sake gwadawa.';
 
   @override
-  String get map_overlay_size_label => 'Overlay Size';
+  String get map_overlay_size_label => 'Girman Overlay';
 
   @override
-  String get map_loading_buildings => 'Loading buildings...';
+  String get map_loading_buildings => 'Ana ɗaukar gine-gine...';
 
   @override
-  String get map_building_details_title => 'Building Details';
+  String get map_building_details_title => 'Bayanan Gini';
 
   @override
-  String get map_building_area_label => 'Area:';
+  String get map_building_area_label => 'Yanki:';
 
   @override
-  String get map_building_confidence_label => 'Confidence:';
+  String get map_building_confidence_label => 'Amincewa:';
 
   @override
-  String get map_building_points_label => 'Points:';
+  String get map_building_points_label => 'Maki:';
 
   @override
-  String get map_building_center_label => 'Center:';
+  String get map_building_center_label => 'Cibiya:';
 
   @override
-  String get map_building_close => 'Close';
+  String get map_building_close => 'Rufe';
 
   @override
-  String get map_building_send_to_lg => 'Send to LG';
+  String get map_building_send_to_lg => 'Aika zuwa LG';
 
   @override
-  String get map_lg_connected => 'LG Connected';
+  String get map_lg_connected => 'LG ya Haɗu';
 
   @override
-  String get map_lg_disconnected => 'LG Disconnected';
+  String get map_lg_disconnected => 'LG ya Rabu';
 
   @override
-  String get map_sending_building_to_lg => 'Sending to Liquid Galaxy...';
+  String get map_sending_building_to_lg => 'Ana aikawa zuwa Liquid Galaxy...';
 
   @override
-  String get map_sending_region_to_lg => 'Sending region to Liquid Galaxy...';
+  String get map_sending_region_to_lg =>
+      'Ana aikan yanki zuwa Liquid Galaxy...';
 
   @override
   String get map_building_sent_success =>
-      'Building sent to Liquid Galaxy successfully!';
+      'An aika ginin zuwa Liquid Galaxy da nasara!';
 
   @override
   String map_region_sent_success(int count) {
-    return 'Region with $count buildings sent to Liquid Galaxy!';
+    return 'An aika yanki mai gine-gine $count zuwa Liquid Galaxy!';
   }
 
   @override
   String map_building_send_failed(String error) {
-    return 'Failed to send building to LG: $error';
+    return 'Aikawa gini zuwa LG ya kasa: $error';
   }
 
   @override
   String map_region_send_failed(String error) {
-    return 'Failed to send region to LG: $error';
+    return 'Aikawa yanki zuwa LG ya kasa: $error';
   }
 
   @override
   String map_buildings_load_failed(String error) {
-    return 'Failed to load buildings: $error';
+    return 'Ɗaukar gine-gine ya kasa: $error';
   }
 
   @override
-  String get map_connect_lg_first => 'Please connect to Liquid Galaxy first';
+  String get map_connect_lg_first => 'Da fari ka haɗu da Liquid Galaxy';
 
   @override
-  String get map_connect_action => 'Connect';
+  String get map_connect_action => 'Haɗa';
 
   @override
   String map_zoom_out_limit(String zoom) {
-    return 'Maximum zoom out reached (${zoom}x)';
+    return 'An kai iyakar zoom out (${zoom}x)';
   }
 
   @override
   String map_zoom_in_limit(String zoom) {
-    return 'Maximum zoom in reached (${zoom}x)';
+    return 'An kai iyakar zoom in (${zoom}x)';
   }
 
   @override
-  String get map_selected_building_title => 'Selected Building';
+  String get map_selected_building_title => 'Ginin da aka Zaɓa';
 
   @override
   String map_selected_building_info(String area, String confidence) {
-    return 'Area: $area m² • Confidence: $confidence%';
+    return 'Yanki: $area m² • Amincewa: $confidence%';
   }
 
   @override
-  String get map_loading_historical_data => 'Loading historical data...';
+  String get map_loading_historical_data => 'Ana ɗaukar bayanan tarihi...';
 
   @override
-  String get settings_title => 'Settings';
+  String get settings_title => 'Saiti';
 
   @override
-  String get settings_lg_configuration => 'Liquid Galaxy Configuration';
+  String get settings_lg_configuration => 'Saitar Liquid Galaxy';
 
   @override
-  String get settings_visualization => 'Visualization Settings';
+  String get settings_visualization => 'Saitar Gani';
 
   @override
-  String get settings_data => 'Data Settings';
+  String get settings_data => 'Saitar Bayanai';
 
   @override
-  String get settings_about => 'About';
+  String get settings_about => 'Game da';
 
   @override
-  String get lg_config_title => 'Liquid Galaxy Configuration';
+  String get lg_config_title => 'Saitar Liquid Galaxy';
 
   @override
-  String get lg_config_connection_tab => 'Connection';
+  String get lg_config_connection_tab => 'Haɗi';
 
   @override
   String get lg_config_lg_tab => 'Liquid Galaxy';
@@ -217,10 +218,10 @@ class AppLocalizationsHa extends AppLocalizations {
   String get lg_config_scan_qr => 'Scan QR Code';
 
   @override
-  String get lg_config_manual_entry => 'Or enter manually:';
+  String get lg_config_manual_entry => 'Ko shigar da hannu:';
 
   @override
-  String get lg_config_ip_address => 'IP Address';
+  String get lg_config_ip_address => 'Adireshin IP';
 
   @override
   String get lg_config_port => 'Port';
@@ -229,212 +230,212 @@ class AppLocalizationsHa extends AppLocalizations {
   String get lg_config_rigs => 'Rigs';
 
   @override
-  String get lg_config_username => 'Username';
+  String get lg_config_username => 'Sunan mai amfani';
 
   @override
-  String get lg_config_password => 'Password';
+  String get lg_config_password => 'Kalmar sirri';
 
   @override
-  String get lg_config_connecting => 'Connecting...';
+  String get lg_config_connecting => 'Ana haɗawa...';
 
   @override
-  String get lg_config_connect => 'Connect';
+  String get lg_config_connect => 'Haɗa';
 
   @override
-  String get lg_config_connection_status => 'Connection Status';
+  String get lg_config_connection_status => 'Matsayin Haɗi';
 
   @override
   String get lg_config_connect_first_message =>
-      'Connect to Liquid Galaxy first to enable these actions.';
+      'Ka fara haɗu da Liquid Galaxy don kunna waɗannan ayyuka.';
 
   @override
-  String get lg_action_set_slaves_refresh => 'SET SLAVES REFRESH';
+  String get lg_action_set_slaves_refresh => 'SAITA SABUNTA BAYI';
 
   @override
-  String get lg_action_reset_slaves_refresh => 'RESET SLAVES REFRESH';
+  String get lg_action_reset_slaves_refresh => 'SAKE SAITA SABUNTA BAYI';
 
   @override
-  String get lg_action_clear_kml_logos => 'CLEAR KML + LOGOS';
+  String get lg_action_clear_kml_logos => 'SHARE KML + LOGOS';
 
   @override
-  String get lg_action_relaunch => 'RELAUNCH';
+  String get lg_action_relaunch => 'SAKE ƘADDAMARWA';
 
   @override
-  String get lg_action_reboot => 'REBOOT';
+  String get lg_action_reboot => 'SAKE KUNNA';
 
   @override
-  String get lg_action_power_off => 'POWER OFF';
+  String get lg_action_power_off => 'KASHE';
 
   @override
-  String get lg_status_connected => 'Connected';
+  String get lg_status_connected => 'Ya haɗu';
 
   @override
-  String get lg_status_connecting => 'Connecting...';
+  String get lg_status_connecting => 'Ana haɗawa...';
 
   @override
-  String get lg_status_error => 'Error';
+  String get lg_status_error => 'Kuskure';
 
   @override
-  String get lg_status_disconnected => 'Disconnected';
+  String get lg_status_disconnected => 'Ya rabu';
 
   @override
-  String get lg_confirm_title => 'Confirm Action';
+  String get lg_confirm_title => 'Tabbatar da Aikin';
 
   @override
-  String get lg_confirm_cancel => 'Cancel';
+  String get lg_confirm_cancel => 'Soke';
 
   @override
-  String get lg_confirm_yes => 'Yes';
+  String get lg_confirm_yes => 'Eh';
 
   @override
   String get lg_confirm_set_slaves_refresh =>
-      'Are you sure you want to set slaves refresh?';
+      'Ka tabbata kana son saita sabunta bayi?';
 
   @override
   String get lg_confirm_reset_slaves_refresh =>
-      'Are you sure you want to reset slaves refresh?';
+      'Ka tabbata kana son sake saita sabunta bayi?';
 
   @override
   String get lg_confirm_clear_kml_logos =>
-      'Are you sure you want to clear KML and logos?';
+      'Ka tabbata kana son share KML da logos?';
 
   @override
-  String get lg_confirm_relaunch => 'Are you sure you want to relaunch LG?';
+  String get lg_confirm_relaunch => 'Ka tabbata kana son sake ƙaddamar da LG?';
 
   @override
-  String get lg_confirm_reboot => 'Are you sure you want to reboot LG?';
+  String get lg_confirm_reboot => 'Ka tabbata kana son sake kunna LG?';
 
   @override
-  String get lg_confirm_power_off => 'Are you sure you want to power off LG?';
+  String get lg_confirm_power_off => 'Ka tabbata kana son kashe LG?';
 
   @override
-  String get lg_action_setting_slaves_refresh => 'Setting slaves refresh...';
+  String get lg_action_setting_slaves_refresh => 'Ana saita sabunta bayi...';
 
   @override
   String get lg_action_resetting_slaves_refresh =>
-      'Resetting slaves refresh...';
+      'Ana sake saita sabunta bayi...';
 
   @override
-  String get lg_action_clearing_kml_logos => 'Clearing KML and logos...';
+  String get lg_action_clearing_kml_logos => 'Ana share KML da logos...';
 
   @override
-  String get lg_action_relaunching => 'Relaunching LG...';
+  String get lg_action_relaunching => 'Ana sake ƙaddamar da LG...';
 
   @override
-  String get lg_action_rebooting => 'Rebooting LG...';
+  String get lg_action_rebooting => 'Ana sake kunna LG...';
 
   @override
-  String get lg_action_powering_off => 'Powering off LG...';
+  String get lg_action_powering_off => 'Ana kashe LG...';
 
   @override
-  String get lg_action_success => 'Action completed successfully!';
+  String get lg_action_success => 'An kammala aikin da nasara!';
 
   @override
   String lg_action_failed(String error) {
-    return 'Action failed: $error';
+    return 'Aikin ya kasa: $error';
   }
 
   @override
-  String get form_required => 'Required';
+  String get form_required => 'Ana bukata';
 
   @override
-  String get form_invalid_ip => 'Invalid IP';
+  String get form_invalid_ip => 'IP mara inganci';
 
   @override
-  String get form_invalid_number => 'Invalid number';
+  String get form_invalid_number => 'Lamba mara inganci';
 
   @override
   String get qr_scan_title => 'Scan QR Code';
 
   @override
-  String get qr_invalid_data => 'Invalid QR JSON data';
+  String get qr_invalid_data => 'Bayanan QR JSON marasa inganci';
 
   @override
-  String get qr_scanned_success_title => 'QR Code Scanned Successfully';
+  String get qr_scanned_success_title => 'An Scan QR Code da Nasara';
 
   @override
-  String get qr_credentials_found => 'The following credentials were found:';
+  String get qr_credentials_found => 'An samo waɗannan takaddun shaida:';
 
   @override
   String get qr_proceed_question =>
-      'Do you want to proceed with connecting to Liquid Galaxy using these credentials?';
+      'Kana son ci gaba da haɗuwa da Liquid Galaxy ta amfani da waɗannan takaddun shaida?';
 
   @override
-  String get qr_connect_button => 'Connect';
+  String get qr_connect_button => 'Haɗa';
 
   @override
   String get lg_connection_success =>
-      'Successfully connected to Liquid Galaxy! Logo displayed.';
+      'An haɗu da Liquid Galaxy da nasara! An nuna logo.';
 
   @override
   String lg_connection_failed(String error) {
-    return 'Connection failed: $error';
+    return 'Haɗuwa ya kasa: $error';
   }
 
   @override
-  String get viz_settings_title => 'Visualization Settings';
+  String get viz_settings_title => 'Saitar Gani';
 
   @override
-  String get viz_confidence_threshold => 'Confidence Threshold';
+  String get viz_confidence_threshold => 'Iyakar Amincewa';
 
   @override
   String get viz_threshold_info =>
-      'Set the minimum confidence threshold for visualizing buildings retrieved from the API. Lower thresholds show more buildings, but may include less accurate results.';
+      'Saita ƙaramin iyakar amincewa don ganin gine-ginen da aka samo daga API. Ƙananan iyakoki suna nuna ƙarin gine-gine, amma za su iya haɗa sakamako marasa daidaito.';
 
   @override
-  String get data_settings_title => 'Data Settings';
+  String get data_settings_title => 'Saitar Bayanai';
 
   @override
-  String get data_source_version => 'Data Source Version';
+  String get data_source_version => 'Sigar Tushen Bayanai';
 
   @override
-  String get data_visualization_mode => 'Visualization Mode (Hybrid/Dark)';
+  String get data_visualization_mode => 'Yanayin Gani (Hybrid/Dark)';
 
   @override
   String get data_version_v3_2025 => 'V3 (2025)';
 
   @override
-  String get about_title => 'About';
+  String get about_title => 'Game da';
 
   @override
-  String get about_app_title => 'Open Buildings Dataset Tool';
+  String get about_app_title => 'Kayan Aikin Bayanan Gine-ginen Buɗaɗɗe';
 
   @override
   String get about_app_description =>
-      'Interactive visualization tool for Google\'s Open Buildings dataset\nwith Liquid Galaxy integration';
+      'Kayan aikin gani mai amsawa don bayanan Open Buildings na Google\ntare da haɗin Liquid Galaxy';
 
   @override
-  String get about_version => 'Version';
+  String get about_version => 'Sigar';
 
   @override
   String get about_version_number => '1.0.0';
 
   @override
-  String get about_data_source => 'Data Source';
+  String get about_data_source => 'Tushen Bayanai';
 
   @override
   String get about_data_source_value => 'Google Open Buildings V3';
 
   @override
-  String get about_project => 'Project';
+  String get about_project => 'Aikin';
 
   @override
   String get about_project_value => 'GSoC 2025 - Liquid Galaxy';
 
   @override
-  String get about_build_date => 'Build Date';
+  String get about_build_date => 'Ranar Ginawa';
 
   @override
-  String get about_build_date_value => 'January 2025';
+  String get about_build_date_value => 'Janairu 2025';
 
   @override
-  String get about_developer => 'Developer';
+  String get about_developer => 'Mai Ƙirƙira';
 
   @override
   String get about_developer_name => 'Jaivardhan Shukla';
 
   @override
-  String get about_developer_location => 'VNIT Nagpur, India';
+  String get about_developer_location => 'VNIT Nagpur, Indiya';
 
   @override
   String get about_github => 'GitHub';
@@ -443,39 +444,38 @@ class AppLocalizationsHa extends AppLocalizations {
   String get about_linkedin => 'LinkedIn';
 
   @override
-  String get about_email => 'Email';
+  String get about_email => 'Imel';
 
   @override
-  String get about_project_details => 'About this Project';
+  String get about_project_details => 'Game da wannan Aikin';
 
   @override
   String get about_project_description =>
-      'This application integrates Google\'s Open Buildings dataset with interactive mapping capabilities and Liquid Galaxy visualization. Built as part of Google Summer of Code 2025 with the Liquid Galaxy organization.';
+      'Wannan aikawa-yarjejeniya tana haɗa bayanan Open Buildings na Google tare da damar taswira mai amsawa da gani na Liquid Galaxy. An gina shi a matsayin sashen Google Summer of Code 2025 tare da ƙungiyar Liquid Galaxy.';
 
   @override
-  String get about_key_features => 'Key Features:';
+  String get about_key_features => 'Mahimman Dabarun:';
 
   @override
-  String get about_feature_1 => 'Interactive building footprint visualization';
+  String get about_feature_1 => 'Gani mai amsawa na alamun gine-gine';
 
   @override
-  String get about_feature_2 => 'Real-time data from Google Earth Engine';
+  String get about_feature_2 => 'Bayanan kai tsaye daga Google Earth Engine';
 
   @override
-  String get about_feature_3 =>
-      'Liquid Galaxy integration for immersive experience';
+  String get about_feature_3 => 'Haɗin Liquid Galaxy don ƙwararar zurfi';
 
   @override
-  String get about_feature_4 => 'Grid-based mapping with zoom controls';
+  String get about_feature_4 => 'Taswira tushen grid tare da sarrafa zoom';
 
   @override
-  String get about_feature_5 => 'Building confidence score visualization';
+  String get about_feature_5 => 'Ganin ƙimar amincewa gine-gine';
 
   @override
-  String get about_view_repository => 'View Project Repository';
+  String get about_view_repository => 'Duba Repository na Aikin';
 
   @override
-  String get about_open_buildings_dataset => 'Open Buildings Dataset';
+  String get about_open_buildings_dataset => 'Bayanan Gine-ginen Buɗaɗɗe';
 
   @override
   String get about_liquid_galaxy => 'Liquid Galaxy';

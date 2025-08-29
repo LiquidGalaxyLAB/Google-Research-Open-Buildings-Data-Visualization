@@ -9,432 +9,432 @@ class AppLocalizationsVi extends AppLocalizations {
   AppLocalizationsVi([String locale = 'vi']) : super(locale);
 
   @override
-  String get help_title => 'Help';
+  String get help_title => 'Trợ giúp';
 
   @override
-  String get help_app_title => 'Open Buildings Explorer';
+  String get help_app_title => 'Trình Khám Phá Tòa Nhà Mở';
 
   @override
   String get help_app_description =>
-      'Explore building footprints across the globe with Liquid Galaxy integration';
+      'Khám phá dấu chân các tòa nhà trên toàn thế giới với tích hợp Liquid Galaxy';
 
   @override
-  String get help_step1_title => 'Select Map Area';
+  String get help_step1_title => 'Chọn Khu Vực Bản Đồ';
 
   @override
   String get help_step1_description =>
-      'Use the controls on the right side of the map to modify and select the area of tiles you want to explore.';
+      'Sử dụng các điều khiển ở phía bên phải của bản đồ để sửa đổi và chọn khu vực các ô mà bạn muốn khám phá.';
 
   @override
-  String get help_step2_title => 'Choose a Tile';
+  String get help_step2_title => 'Chọn Một Ô';
 
   @override
   String get help_step2_description =>
-      'Click on a specific tile within your selected area to fetch building data from the Open Buildings dataset.';
+      'Nhấp vào một ô cụ thể trong khu vực đã chọn để lấy dữ liệu tòa nhà từ bộ dữ liệu Tòa Nhà Mở.';
 
   @override
-  String get help_step3_title => 'View Results';
+  String get help_step3_title => 'Xem Kết Quả';
 
   @override
   String get help_step3_description =>
-      'Once data is fetched, a bottom sheet will appear showing the results. You can send all data to Liquid Galaxy for visualization.';
+      'Sau khi dữ liệu được lấy, một bảng dưới sẽ xuất hiện hiển thị kết quả. Bạn có thể gửi tất cả dữ liệu đến Liquid Galaxy để hiển thị.';
 
   @override
-  String get help_step4_title => 'Explore Buildings';
+  String get help_step4_title => 'Khám Phá Tòa Nhà';
 
   @override
   String get help_step4_description =>
-      'Switch to the Buildings tab to see individual building details, including plus codes and confidence scores.';
+      'Chuyển sang tab Tòa Nhà để xem chi tiết từng tòa nhà, bao gồm mã plus và điểm tin cậy.';
 
   @override
-  String get help_confidence_title => 'About Confidence Scores';
+  String get help_confidence_title => 'Về Điểm Tin Cậy';
 
   @override
   String get help_confidence_description =>
-      'Each building shows a confidence score that indicates how reliable the data from the Open Buildings dataset is for that particular structure.';
+      'Mỗi tòa nhà hiển thị một điểm tin cậy cho biết độ tin cậy của dữ liệu từ bộ dữ liệu Tòa Nhà Mở cho cấu trúc cụ thể đó.';
 
   @override
-  String get onboarding_lg_integration_title => 'Liquid Galaxy Integration';
+  String get onboarding_lg_integration_title => 'Tích Hợp Liquid Galaxy';
 
   @override
   String get onboarding_lg_integration_description =>
-      'Send building data to Liquid Galaxy for immersive visualization experience';
+      'Gửi dữ liệu tòa nhà đến Liquid Galaxy để trải nghiệm hiển thị đắm chìm';
 
   @override
   String get onboarding_explorer_title =>
-      'Liquid Galaxy Open Buildings Explorer';
+      'Trình Khám Phá Tòa Nhà Mở Liquid Galaxy';
 
   @override
   String get onboarding_explorer_description =>
-      'Explore building footprints across the globe with interactive visualization';
+      'Khám phá dấu chân tòa nhà trên toàn thế giới với hiển thị tương tác';
 
   @override
-  String get onboarding_interactive_map_title => 'Interactive Map';
+  String get onboarding_interactive_map_title => 'Bản Đồ Tương Tác';
 
   @override
   String get onboarding_interactive_map_description =>
-      'Select regions to visualize building density and footprints in real-time';
+      'Chọn các vùng để hiển thị mật độ và dấu chân tòa nhà theo thời gian thực';
 
   @override
-  String get onboarding_get_started => 'Get Started';
+  String get onboarding_get_started => 'Bắt Đầu';
 
   @override
-  String get onboarding_next => 'Next';
+  String get onboarding_next => 'Tiếp Theo';
 
   @override
-  String get map_title => 'Open Buildings';
+  String get map_title => 'Tòa Nhà Mở';
 
   @override
-  String get map_clear_selection_tooltip => 'Clear building selection';
+  String get map_clear_selection_tooltip => 'Xóa lựa chọn tòa nhà';
 
   @override
-  String get map_search_hint => 'Search for a location';
+  String get map_search_hint => 'Tìm kiếm một vị trí';
 
   @override
-  String get map_searching => 'Searching...';
+  String get map_searching => 'Đang tìm kiếm...';
 
   @override
-  String get map_search_no_results => 'No results found';
+  String get map_search_no_results => 'Không tìm thấy kết quả';
 
   @override
-  String get map_search_failed => 'Search failed. Please try again.';
+  String get map_search_failed => 'Tìm kiếm thất bại. Vui lòng thử lại.';
 
   @override
-  String get map_overlay_size_label => 'Overlay Size';
+  String get map_overlay_size_label => 'Kích Thước Lớp Phủ';
 
   @override
-  String get map_loading_buildings => 'Loading buildings...';
+  String get map_loading_buildings => 'Đang tải tòa nhà...';
 
   @override
-  String get map_building_details_title => 'Building Details';
+  String get map_building_details_title => 'Chi Tiết Tòa Nhà';
 
   @override
-  String get map_building_area_label => 'Area:';
+  String get map_building_area_label => 'Diện tích:';
 
   @override
-  String get map_building_confidence_label => 'Confidence:';
+  String get map_building_confidence_label => 'Tin cậy:';
 
   @override
-  String get map_building_points_label => 'Points:';
+  String get map_building_points_label => 'Điểm:';
 
   @override
-  String get map_building_center_label => 'Center:';
+  String get map_building_center_label => 'Trung tâm:';
 
   @override
-  String get map_building_close => 'Close';
+  String get map_building_close => 'Đóng';
 
   @override
-  String get map_building_send_to_lg => 'Send to LG';
+  String get map_building_send_to_lg => 'Gửi đến LG';
 
   @override
-  String get map_lg_connected => 'LG Connected';
+  String get map_lg_connected => 'LG Đã Kết Nối';
 
   @override
-  String get map_lg_disconnected => 'LG Disconnected';
+  String get map_lg_disconnected => 'LG Đã Ngắt Kết Nối';
 
   @override
-  String get map_sending_building_to_lg => 'Sending to Liquid Galaxy...';
+  String get map_sending_building_to_lg => 'Đang gửi đến Liquid Galaxy...';
 
   @override
-  String get map_sending_region_to_lg => 'Sending region to Liquid Galaxy...';
+  String get map_sending_region_to_lg => 'Đang gửi vùng đến Liquid Galaxy...';
 
   @override
   String get map_building_sent_success =>
-      'Building sent to Liquid Galaxy successfully!';
+      'Tòa nhà đã được gửi đến Liquid Galaxy thành công!';
 
   @override
   String map_region_sent_success(int count) {
-    return 'Region with $count buildings sent to Liquid Galaxy!';
+    return 'Vùng với $count tòa nhà đã được gửi đến Liquid Galaxy!';
   }
 
   @override
   String map_building_send_failed(String error) {
-    return 'Failed to send building to LG: $error';
+    return 'Gửi tòa nhà đến LG thất bại: $error';
   }
 
   @override
   String map_region_send_failed(String error) {
-    return 'Failed to send region to LG: $error';
+    return 'Gửi vùng đến LG thất bại: $error';
   }
 
   @override
   String map_buildings_load_failed(String error) {
-    return 'Failed to load buildings: $error';
+    return 'Tải tòa nhà thất bại: $error';
   }
 
   @override
-  String get map_connect_lg_first => 'Please connect to Liquid Galaxy first';
+  String get map_connect_lg_first => 'Vui lòng kết nối với Liquid Galaxy trước';
 
   @override
-  String get map_connect_action => 'Connect';
+  String get map_connect_action => 'Kết Nối';
 
   @override
   String map_zoom_out_limit(String zoom) {
-    return 'Maximum zoom out reached (${zoom}x)';
+    return 'Đã đạt giới hạn thu nhỏ tối đa (${zoom}x)';
   }
 
   @override
   String map_zoom_in_limit(String zoom) {
-    return 'Maximum zoom in reached (${zoom}x)';
+    return 'Đã đạt giới hạn phóng to tối đa (${zoom}x)';
   }
 
   @override
-  String get map_selected_building_title => 'Selected Building';
+  String get map_selected_building_title => 'Tòa Nhà Đã Chọn';
 
   @override
   String map_selected_building_info(String area, String confidence) {
-    return 'Area: $area m² • Confidence: $confidence%';
+    return 'Diện tích: $area m² • Tin cậy: $confidence%';
   }
 
   @override
-  String get map_loading_historical_data => 'Loading historical data...';
+  String get map_loading_historical_data => 'Đang tải dữ liệu lịch sử...';
 
   @override
-  String get settings_title => 'Settings';
+  String get settings_title => 'Cài Đặt';
 
   @override
-  String get settings_lg_configuration => 'Liquid Galaxy Configuration';
+  String get settings_lg_configuration => 'Cấu Hình Liquid Galaxy';
 
   @override
-  String get settings_visualization => 'Visualization Settings';
+  String get settings_visualization => 'Cài Đặt Hiển Thị';
 
   @override
-  String get settings_data => 'Data Settings';
+  String get settings_data => 'Cài Đặt Dữ Liệu';
 
   @override
-  String get settings_about => 'About';
+  String get settings_about => 'Giới Thiệu';
 
   @override
-  String get lg_config_title => 'Liquid Galaxy Configuration';
+  String get lg_config_title => 'Cấu Hình Liquid Galaxy';
 
   @override
-  String get lg_config_connection_tab => 'Connection';
+  String get lg_config_connection_tab => 'Kết Nối';
 
   @override
   String get lg_config_lg_tab => 'Liquid Galaxy';
 
   @override
-  String get lg_config_scan_qr => 'Scan QR Code';
+  String get lg_config_scan_qr => 'Quét Mã QR';
 
   @override
-  String get lg_config_manual_entry => 'Or enter manually:';
+  String get lg_config_manual_entry => 'Hoặc nhập thủ công:';
 
   @override
-  String get lg_config_ip_address => 'IP Address';
+  String get lg_config_ip_address => 'Địa Chỉ IP';
 
   @override
-  String get lg_config_port => 'Port';
+  String get lg_config_port => 'Cổng';
 
   @override
-  String get lg_config_rigs => 'Rigs';
+  String get lg_config_rigs => 'Thiết Bị';
 
   @override
-  String get lg_config_username => 'Username';
+  String get lg_config_username => 'Tên người dùng';
 
   @override
-  String get lg_config_password => 'Password';
+  String get lg_config_password => 'Mật khẩu';
 
   @override
-  String get lg_config_connecting => 'Connecting...';
+  String get lg_config_connecting => 'Đang kết nối...';
 
   @override
-  String get lg_config_connect => 'Connect';
+  String get lg_config_connect => 'Kết Nối';
 
   @override
-  String get lg_config_connection_status => 'Connection Status';
+  String get lg_config_connection_status => 'Trạng Thái Kết Nối';
 
   @override
   String get lg_config_connect_first_message =>
-      'Connect to Liquid Galaxy first to enable these actions.';
+      'Kết nối với Liquid Galaxy trước để kích hoạt các hành động này.';
 
   @override
-  String get lg_action_set_slaves_refresh => 'SET SLAVES REFRESH';
+  String get lg_action_set_slaves_refresh => 'ĐẶT LÀM MỚI SLAVES';
 
   @override
-  String get lg_action_reset_slaves_refresh => 'RESET SLAVES REFRESH';
+  String get lg_action_reset_slaves_refresh => 'RESET LÀM MỚI SLAVES';
 
   @override
-  String get lg_action_clear_kml_logos => 'CLEAR KML + LOGOS';
+  String get lg_action_clear_kml_logos => 'XÓA KML + LOGO';
 
   @override
-  String get lg_action_relaunch => 'RELAUNCH';
+  String get lg_action_relaunch => 'KHỞI ĐỘNG LẠI';
 
   @override
   String get lg_action_reboot => 'REBOOT';
 
   @override
-  String get lg_action_power_off => 'POWER OFF';
+  String get lg_action_power_off => 'TẮT NGUỒN';
 
   @override
-  String get lg_status_connected => 'Connected';
+  String get lg_status_connected => 'Đã kết nối';
 
   @override
-  String get lg_status_connecting => 'Connecting...';
+  String get lg_status_connecting => 'Đang kết nối...';
 
   @override
-  String get lg_status_error => 'Error';
+  String get lg_status_error => 'Lỗi';
 
   @override
-  String get lg_status_disconnected => 'Disconnected';
+  String get lg_status_disconnected => 'Đã ngắt kết nối';
 
   @override
-  String get lg_confirm_title => 'Confirm Action';
+  String get lg_confirm_title => 'Xác Nhận Hành Động';
 
   @override
-  String get lg_confirm_cancel => 'Cancel';
+  String get lg_confirm_cancel => 'Hủy';
 
   @override
-  String get lg_confirm_yes => 'Yes';
+  String get lg_confirm_yes => 'Có';
 
   @override
   String get lg_confirm_set_slaves_refresh =>
-      'Are you sure you want to set slaves refresh?';
+      'Bạn có chắc muốn đặt làm mới slaves?';
 
   @override
   String get lg_confirm_reset_slaves_refresh =>
-      'Are you sure you want to reset slaves refresh?';
+      'Bạn có chắc muốn reset làm mới slaves?';
 
   @override
-  String get lg_confirm_clear_kml_logos =>
-      'Are you sure you want to clear KML and logos?';
+  String get lg_confirm_clear_kml_logos => 'Bạn có chắc muốn xóa KML và logo?';
 
   @override
-  String get lg_confirm_relaunch => 'Are you sure you want to relaunch LG?';
+  String get lg_confirm_relaunch => 'Bạn có chắc muốn khởi động lại LG?';
 
   @override
-  String get lg_confirm_reboot => 'Are you sure you want to reboot LG?';
+  String get lg_confirm_reboot => 'Bạn có chắc muốn reboot LG?';
 
   @override
-  String get lg_confirm_power_off => 'Are you sure you want to power off LG?';
+  String get lg_confirm_power_off => 'Bạn có chắc muốn tắt nguồn LG?';
 
   @override
-  String get lg_action_setting_slaves_refresh => 'Setting slaves refresh...';
+  String get lg_action_setting_slaves_refresh => 'Đang đặt làm mới slaves...';
 
   @override
   String get lg_action_resetting_slaves_refresh =>
-      'Resetting slaves refresh...';
+      'Đang reset làm mới slaves...';
 
   @override
-  String get lg_action_clearing_kml_logos => 'Clearing KML and logos...';
+  String get lg_action_clearing_kml_logos => 'Đang xóa KML và logo...';
 
   @override
-  String get lg_action_relaunching => 'Relaunching LG...';
+  String get lg_action_relaunching => 'Đang khởi động lại LG...';
 
   @override
-  String get lg_action_rebooting => 'Rebooting LG...';
+  String get lg_action_rebooting => 'Đang reboot LG...';
 
   @override
-  String get lg_action_powering_off => 'Powering off LG...';
+  String get lg_action_powering_off => 'Đang tắt nguồn LG...';
 
   @override
-  String get lg_action_success => 'Action completed successfully!';
+  String get lg_action_success => 'Hành động hoàn thành thành công!';
 
   @override
   String lg_action_failed(String error) {
-    return 'Action failed: $error';
+    return 'Hành động thất bại: $error';
   }
 
   @override
-  String get form_required => 'Required';
+  String get form_required => 'Bắt buộc';
 
   @override
-  String get form_invalid_ip => 'Invalid IP';
+  String get form_invalid_ip => 'IP không hợp lệ';
 
   @override
-  String get form_invalid_number => 'Invalid number';
+  String get form_invalid_number => 'Số không hợp lệ';
 
   @override
-  String get qr_scan_title => 'Scan QR Code';
+  String get qr_scan_title => 'Quét Mã QR';
 
   @override
-  String get qr_invalid_data => 'Invalid QR JSON data';
+  String get qr_invalid_data => 'Dữ liệu JSON QR không hợp lệ';
 
   @override
-  String get qr_scanned_success_title => 'QR Code Scanned Successfully';
+  String get qr_scanned_success_title => 'Mã QR Đã Được Quét Thành Công';
 
   @override
-  String get qr_credentials_found => 'The following credentials were found:';
+  String get qr_credentials_found =>
+      'Các thông tin xác thực sau đã được tìm thấy:';
 
   @override
   String get qr_proceed_question =>
-      'Do you want to proceed with connecting to Liquid Galaxy using these credentials?';
+      'Bạn có muốn tiếp tục kết nối với Liquid Galaxy bằng các thông tin xác thực này?';
 
   @override
-  String get qr_connect_button => 'Connect';
+  String get qr_connect_button => 'Kết Nối';
 
   @override
   String get lg_connection_success =>
-      'Successfully connected to Liquid Galaxy! Logo displayed.';
+      'Kết nối thành công với Liquid Galaxy! Logo đã hiển thị.';
 
   @override
   String lg_connection_failed(String error) {
-    return 'Connection failed: $error';
+    return 'Kết nối thất bại: $error';
   }
 
   @override
-  String get viz_settings_title => 'Visualization Settings';
+  String get viz_settings_title => 'Cài Đặt Hiển Thị';
 
   @override
-  String get viz_confidence_threshold => 'Confidence Threshold';
+  String get viz_confidence_threshold => 'Ngưỡng Tin Cậy';
 
   @override
   String get viz_threshold_info =>
-      'Set the minimum confidence threshold for visualizing buildings retrieved from the API. Lower thresholds show more buildings, but may include less accurate results.';
+      'Đặt ngưỡng tin cậy tối thiểu để hiển thị các tòa nhà được lấy từ API. Ngưỡng thấp hơn hiển thị nhiều tòa nhà hơn, nhưng có thể bao gồm kết quả kém chính xác.';
 
   @override
-  String get data_settings_title => 'Data Settings';
+  String get data_settings_title => 'Cài Đặt Dữ Liệu';
 
   @override
-  String get data_source_version => 'Data Source Version';
+  String get data_source_version => 'Phiên Bản Nguồn Dữ Liệu';
 
   @override
-  String get data_visualization_mode => 'Visualization Mode (Hybrid/Dark)';
+  String get data_visualization_mode => 'Chế Độ Hiển Thị (Hybrid/Dark)';
 
   @override
   String get data_version_v3_2025 => 'V3 (2025)';
 
   @override
-  String get about_title => 'About';
+  String get about_title => 'Giới Thiệu';
 
   @override
-  String get about_app_title => 'Open Buildings Dataset Tool';
+  String get about_app_title => 'Công Cụ Bộ Dữ Liệu Tòa Nhà Mở';
 
   @override
   String get about_app_description =>
-      'Interactive visualization tool for Google\'s Open Buildings dataset\nwith Liquid Galaxy integration';
+      'Công cụ hiển thị tương tác cho bộ dữ liệu Tòa Nhà Mở của Google\nvới tích hợp Liquid Galaxy';
 
   @override
-  String get about_version => 'Version';
+  String get about_version => 'Phiên bản';
 
   @override
   String get about_version_number => '1.0.0';
 
   @override
-  String get about_data_source => 'Data Source';
+  String get about_data_source => 'Nguồn Dữ Liệu';
 
   @override
-  String get about_data_source_value => 'Google Open Buildings V3';
+  String get about_data_source_value => 'Google Tòa Nhà Mở V3';
 
   @override
-  String get about_project => 'Project';
+  String get about_project => 'Dự Án';
 
   @override
   String get about_project_value => 'GSoC 2025 - Liquid Galaxy';
 
   @override
-  String get about_build_date => 'Build Date';
+  String get about_build_date => 'Ngày Xây Dựng';
 
   @override
-  String get about_build_date_value => 'January 2025';
+  String get about_build_date_value => 'Tháng 1 năm 2025';
 
   @override
-  String get about_developer => 'Developer';
+  String get about_developer => 'Nhà Phát Triển';
 
   @override
   String get about_developer_name => 'Jaivardhan Shukla';
 
   @override
-  String get about_developer_location => 'VNIT Nagpur, India';
+  String get about_developer_location => 'VNIT Nagpur, Ấn Độ';
 
   @override
   String get about_github => 'GitHub';
@@ -446,36 +446,36 @@ class AppLocalizationsVi extends AppLocalizations {
   String get about_email => 'Email';
 
   @override
-  String get about_project_details => 'About this Project';
+  String get about_project_details => 'Về Dự Án Này';
 
   @override
   String get about_project_description =>
-      'This application integrates Google\'s Open Buildings dataset with interactive mapping capabilities and Liquid Galaxy visualization. Built as part of Google Summer of Code 2025 with the Liquid Galaxy organization.';
+      'Ứng dụng này tích hợp bộ dữ liệu Tòa Nhà Mở của Google với khả năng lập bản đồ tương tác và hiển thị Liquid Galaxy. Được xây dựng như một phần của Google Summer of Code 2025 với tổ chức Liquid Galaxy.';
 
   @override
-  String get about_key_features => 'Key Features:';
+  String get about_key_features => 'Tính Năng Chính:';
 
   @override
-  String get about_feature_1 => 'Interactive building footprint visualization';
+  String get about_feature_1 => 'Hiển thị tương tác dấu chân tòa nhà';
 
   @override
-  String get about_feature_2 => 'Real-time data from Google Earth Engine';
+  String get about_feature_2 => 'Dữ liệu thời gian thực từ Google Earth Engine';
 
   @override
   String get about_feature_3 =>
-      'Liquid Galaxy integration for immersive experience';
+      'Tích hợp Liquid Galaxy cho trải nghiệm đắm chìm';
 
   @override
-  String get about_feature_4 => 'Grid-based mapping with zoom controls';
+  String get about_feature_4 => 'Lập bản đồ dựa trên lưới với điều khiển zoom';
 
   @override
-  String get about_feature_5 => 'Building confidence score visualization';
+  String get about_feature_5 => 'Hiển thị điểm tin cậy tòa nhà';
 
   @override
-  String get about_view_repository => 'View Project Repository';
+  String get about_view_repository => 'Xem Repository Dự Án';
 
   @override
-  String get about_open_buildings_dataset => 'Open Buildings Dataset';
+  String get about_open_buildings_dataset => 'Bộ Dữ Liệu Tòa Nhà Mở';
 
   @override
   String get about_liquid_galaxy => 'Liquid Galaxy';

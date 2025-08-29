@@ -9,426 +9,432 @@ class AppLocalizationsSw extends AppLocalizations {
   AppLocalizationsSw([String locale = 'sw']) : super(locale);
 
   @override
-  String get help_title => 'Help';
+  String get help_title => 'Msaada';
 
   @override
-  String get help_app_title => 'Open Buildings Explorer';
+  String get help_app_title => 'Mchunguzi wa Majengo ya Wazi';
 
   @override
   String get help_app_description =>
-      'Explore building footprints across the globe with Liquid Galaxy integration';
+      'Chunguza alama za majengo ulimwenguni kote na uunganisho wa Liquid Galaxy';
 
   @override
-  String get help_step1_title => 'Select Map Area';
+  String get help_step1_title => 'Chagua Eneo la Ramani';
 
   @override
   String get help_step1_description =>
-      'Use the controls on the right side of the map to modify and select the area of tiles you want to explore.';
+      'Tumia vidhibiti upande wa kulia wa ramani kubadilisha na kuchagua eneo la vigae unavyotaka kuchunguza.';
 
   @override
-  String get help_step2_title => 'Choose a Tile';
+  String get help_step2_title => 'Chagua Kigae';
 
   @override
   String get help_step2_description =>
-      'Click on a specific tile within your selected area to fetch building data from the Open Buildings dataset.';
+      'Bonyeza kwenye kigae maalum ndani ya eneo ulilochagua ili kupata data ya majengo kutoka kwenye daftari la data ya Majengo ya Wazi.';
 
   @override
-  String get help_step3_title => 'View Results';
+  String get help_step3_title => 'Ona Matokeo';
 
   @override
   String get help_step3_description =>
-      'Once data is fetched, a bottom sheet will appear showing the results. You can send all data to Liquid Galaxy for visualization.';
+      'Baada ya kupata data, jedwali la chini litaonekana likionyesha matokeo. Unaweza kutuma data zote kwenye Liquid Galaxy kwa ajili ya miwani.';
 
   @override
-  String get help_step4_title => 'Explore Buildings';
+  String get help_step4_title => 'Chunguza Majengo';
 
   @override
   String get help_step4_description =>
-      'Switch to the Buildings tab to see individual building details, including plus codes and confidence scores.';
+      'Badilisha kwenda kwenye tab ya Majengo kuona maelezo ya kila jengo, ikiwa ni pamoja na misimbo ya plus na alama za uaminifu.';
 
   @override
-  String get help_confidence_title => 'About Confidence Scores';
+  String get help_confidence_title => 'Kuhusu Alama za Uaminifu';
 
   @override
   String get help_confidence_description =>
-      'Each building shows a confidence score that indicates how reliable the data from the Open Buildings dataset is for that particular structure.';
+      'Kila jengo linaonyesha alama ya uaminifu inayoonyesha jinsi data kutoka kwenye daftari la data ya Majengo ya Wazi ni za kuaminika kwa muundo huo maalum.';
 
   @override
-  String get onboarding_lg_integration_title => 'Liquid Galaxy Integration';
+  String get onboarding_lg_integration_title => 'Uunganisho wa Liquid Galaxy';
 
   @override
   String get onboarding_lg_integration_description =>
-      'Send building data to Liquid Galaxy for immersive visualization experience';
+      'Tuma data ya majengo kwenye Liquid Galaxy kwa uzoefu wa miwani wa kujitumbukiza';
 
   @override
   String get onboarding_explorer_title =>
-      'Liquid Galaxy Open Buildings Explorer';
+      'Mchunguzi wa Majengo ya Wazi wa Liquid Galaxy';
 
   @override
   String get onboarding_explorer_description =>
-      'Explore building footprints across the globe with interactive visualization';
+      'Chunguza alama za majengo ulimwenguni kote na miwani ya maingiliano';
 
   @override
-  String get onboarding_interactive_map_title => 'Interactive Map';
+  String get onboarding_interactive_map_title => 'Ramani ya Maingiliano';
 
   @override
   String get onboarding_interactive_map_description =>
-      'Select regions to visualize building density and footprints in real-time';
+      'Chagua mikoa ili kuona msongamano na alama za majengo muda halisi';
 
   @override
-  String get onboarding_get_started => 'Get Started';
+  String get onboarding_get_started => 'Anza';
 
   @override
-  String get onboarding_next => 'Next';
+  String get onboarding_next => 'Ifuatayo';
 
   @override
-  String get map_title => 'Open Buildings';
+  String get map_title => 'Majengo ya Wazi';
 
   @override
-  String get map_clear_selection_tooltip => 'Clear building selection';
+  String get map_clear_selection_tooltip => 'Futa uchaguzi wa jengo';
 
   @override
-  String get map_search_hint => 'Search for a location';
+  String get map_search_hint => 'Tafuta mahali';
 
   @override
-  String get map_searching => 'Searching...';
+  String get map_searching => 'Inatafuta...';
 
   @override
-  String get map_search_no_results => 'No results found';
+  String get map_search_no_results => 'Hakuna matokeo yaliyopatikana';
 
   @override
-  String get map_search_failed => 'Search failed. Please try again.';
+  String get map_search_failed =>
+      'Utafutaji umeshindwa. Tafadhali jaribu tena.';
 
   @override
-  String get map_overlay_size_label => 'Overlay Size';
+  String get map_overlay_size_label => 'Ukubwa wa Uwandani';
 
   @override
-  String get map_loading_buildings => 'Loading buildings...';
+  String get map_loading_buildings => 'Inapakia majengo...';
 
   @override
-  String get map_building_details_title => 'Building Details';
+  String get map_building_details_title => 'Maelezo ya Jengo';
 
   @override
-  String get map_building_area_label => 'Area:';
+  String get map_building_area_label => 'Eneo:';
 
   @override
-  String get map_building_confidence_label => 'Confidence:';
+  String get map_building_confidence_label => 'Uaminifu:';
 
   @override
-  String get map_building_points_label => 'Points:';
+  String get map_building_points_label => 'Pointi:';
 
   @override
-  String get map_building_center_label => 'Center:';
+  String get map_building_center_label => 'Kituo:';
 
   @override
-  String get map_building_close => 'Close';
+  String get map_building_close => 'Funga';
 
   @override
-  String get map_building_send_to_lg => 'Send to LG';
+  String get map_building_send_to_lg => 'Tuma kwenye LG';
 
   @override
-  String get map_lg_connected => 'LG Connected';
+  String get map_lg_connected => 'LG Imeunganishwa';
 
   @override
-  String get map_lg_disconnected => 'LG Disconnected';
+  String get map_lg_disconnected => 'LG Imekatika';
 
   @override
-  String get map_sending_building_to_lg => 'Sending to Liquid Galaxy...';
+  String get map_sending_building_to_lg => 'Inatuma kwenye Liquid Galaxy...';
 
   @override
-  String get map_sending_region_to_lg => 'Sending region to Liquid Galaxy...';
+  String get map_sending_region_to_lg => 'Inatuma mkoa kwenye Liquid Galaxy...';
 
   @override
   String get map_building_sent_success =>
-      'Building sent to Liquid Galaxy successfully!';
+      'Jengo limetumwa kwenye Liquid Galaxy kwa mafanikio!';
 
   @override
   String map_region_sent_success(int count) {
-    return 'Region with $count buildings sent to Liquid Galaxy!';
+    return 'Mkoa wenye majengo $count umetumwa kwenye Liquid Galaxy!';
   }
 
   @override
   String map_building_send_failed(String error) {
-    return 'Failed to send building to LG: $error';
+    return 'Imeshindwa kutuma jengo kwenye LG: $error';
   }
 
   @override
   String map_region_send_failed(String error) {
-    return 'Failed to send region to LG: $error';
+    return 'Imeshindwa kutuma mkoa kwenye LG: $error';
   }
 
   @override
   String map_buildings_load_failed(String error) {
-    return 'Failed to load buildings: $error';
+    return 'Imeshindwa kupakia majengo: $error';
   }
 
   @override
-  String get map_connect_lg_first => 'Please connect to Liquid Galaxy first';
+  String get map_connect_lg_first =>
+      'Tafadhali unganisha kwenye Liquid Galaxy kwanza';
 
   @override
-  String get map_connect_action => 'Connect';
+  String get map_connect_action => 'Unganisha';
 
   @override
   String map_zoom_out_limit(String zoom) {
-    return 'Maximum zoom out reached (${zoom}x)';
+    return 'Kikomo cha juu cha zoom out kimefikiwa (${zoom}x)';
   }
 
   @override
   String map_zoom_in_limit(String zoom) {
-    return 'Maximum zoom in reached (${zoom}x)';
+    return 'Kikomo cha juu cha zoom in kimefikiwa (${zoom}x)';
   }
 
   @override
-  String get map_selected_building_title => 'Selected Building';
+  String get map_selected_building_title => 'Jengo Lililochaguliwa';
 
   @override
   String map_selected_building_info(String area, String confidence) {
-    return 'Area: $area m² • Confidence: $confidence%';
+    return 'Eneo: $area m² • Uaminifu: $confidence%';
   }
 
   @override
-  String get map_loading_historical_data => 'Loading historical data...';
+  String get map_loading_historical_data => 'Inapakia data ya kihistoria...';
 
   @override
-  String get settings_title => 'Settings';
+  String get settings_title => 'Mipangilio';
 
   @override
-  String get settings_lg_configuration => 'Liquid Galaxy Configuration';
+  String get settings_lg_configuration => 'Usanidi wa Liquid Galaxy';
 
   @override
-  String get settings_visualization => 'Visualization Settings';
+  String get settings_visualization => 'Mipangilio ya Miwani';
 
   @override
-  String get settings_data => 'Data Settings';
+  String get settings_data => 'Mipangilio ya Data';
 
   @override
-  String get settings_about => 'About';
+  String get settings_about => 'Kuhusu';
 
   @override
-  String get lg_config_title => 'Liquid Galaxy Configuration';
+  String get lg_config_title => 'Usanidi wa Liquid Galaxy';
 
   @override
-  String get lg_config_connection_tab => 'Connection';
+  String get lg_config_connection_tab => 'Muunganisho';
 
   @override
   String get lg_config_lg_tab => 'Liquid Galaxy';
 
   @override
-  String get lg_config_scan_qr => 'Scan QR Code';
+  String get lg_config_scan_qr => 'Changanua Msimbo wa QR';
 
   @override
-  String get lg_config_manual_entry => 'Or enter manually:';
+  String get lg_config_manual_entry => 'Au ingiza kwa mkono:';
 
   @override
-  String get lg_config_ip_address => 'IP Address';
+  String get lg_config_ip_address => 'Anwani ya IP';
 
   @override
-  String get lg_config_port => 'Port';
+  String get lg_config_port => 'Bandari';
 
   @override
-  String get lg_config_rigs => 'Rigs';
+  String get lg_config_rigs => 'Vifaa';
 
   @override
-  String get lg_config_username => 'Username';
+  String get lg_config_username => 'Jina la mtumiaji';
 
   @override
-  String get lg_config_password => 'Password';
+  String get lg_config_password => 'Nywila';
 
   @override
-  String get lg_config_connecting => 'Connecting...';
+  String get lg_config_connecting => 'Inaunganisha...';
 
   @override
-  String get lg_config_connect => 'Connect';
+  String get lg_config_connect => 'Unganisha';
 
   @override
-  String get lg_config_connection_status => 'Connection Status';
+  String get lg_config_connection_status => 'Hali ya Muunganisho';
 
   @override
   String get lg_config_connect_first_message =>
-      'Connect to Liquid Galaxy first to enable these actions.';
+      'Unganisha kwenye Liquid Galaxy kwanza ili kuwezesha vitendo hivi.';
 
   @override
-  String get lg_action_set_slaves_refresh => 'SET SLAVES REFRESH';
+  String get lg_action_set_slaves_refresh => 'WEKA ONYESHO UPYA WA WATUMWA';
 
   @override
-  String get lg_action_reset_slaves_refresh => 'RESET SLAVES REFRESH';
+  String get lg_action_reset_slaves_refresh =>
+      'REJESHA ONYESHO UPYA WA WATUMWA';
 
   @override
-  String get lg_action_clear_kml_logos => 'CLEAR KML + LOGOS';
+  String get lg_action_clear_kml_logos => 'FUTA KML + NEMBO';
 
   @override
-  String get lg_action_relaunch => 'RELAUNCH';
+  String get lg_action_relaunch => 'ZINDUA UPYA';
 
   @override
-  String get lg_action_reboot => 'REBOOT';
+  String get lg_action_reboot => 'ZINDUA UPYA MFUMO';
 
   @override
-  String get lg_action_power_off => 'POWER OFF';
+  String get lg_action_power_off => 'ZIMA';
 
   @override
-  String get lg_status_connected => 'Connected';
+  String get lg_status_connected => 'Imeunganishwa';
 
   @override
-  String get lg_status_connecting => 'Connecting...';
+  String get lg_status_connecting => 'Inaunganisha...';
 
   @override
-  String get lg_status_error => 'Error';
+  String get lg_status_error => 'Hitilafu';
 
   @override
-  String get lg_status_disconnected => 'Disconnected';
+  String get lg_status_disconnected => 'Imekatika';
 
   @override
-  String get lg_confirm_title => 'Confirm Action';
+  String get lg_confirm_title => 'Thibitisha Kitendo';
 
   @override
-  String get lg_confirm_cancel => 'Cancel';
+  String get lg_confirm_cancel => 'Ghairi';
 
   @override
-  String get lg_confirm_yes => 'Yes';
+  String get lg_confirm_yes => 'Ndiyo';
 
   @override
   String get lg_confirm_set_slaves_refresh =>
-      'Are you sure you want to set slaves refresh?';
+      'Je, una uhakika unataka kuweka onyesho upya wa watumwa?';
 
   @override
   String get lg_confirm_reset_slaves_refresh =>
-      'Are you sure you want to reset slaves refresh?';
+      'Je, una uhakika unataka kurejesha onyesho upya wa watumwa?';
 
   @override
   String get lg_confirm_clear_kml_logos =>
-      'Are you sure you want to clear KML and logos?';
+      'Je, una uhakika unataka kufuta KML na nembo?';
 
   @override
-  String get lg_confirm_relaunch => 'Are you sure you want to relaunch LG?';
+  String get lg_confirm_relaunch => 'Je, una uhakika unataka kuzindua upya LG?';
 
   @override
-  String get lg_confirm_reboot => 'Are you sure you want to reboot LG?';
+  String get lg_confirm_reboot =>
+      'Je, una uhakika unataka kuzindua upya mfumo wa LG?';
 
   @override
-  String get lg_confirm_power_off => 'Are you sure you want to power off LG?';
+  String get lg_confirm_power_off => 'Je, una uhakika unataka kuzima LG?';
 
   @override
-  String get lg_action_setting_slaves_refresh => 'Setting slaves refresh...';
+  String get lg_action_setting_slaves_refresh =>
+      'Inaweka onyesho upya wa watumwa...';
 
   @override
   String get lg_action_resetting_slaves_refresh =>
-      'Resetting slaves refresh...';
+      'Inarejesha onyesho upya wa watumwa...';
 
   @override
-  String get lg_action_clearing_kml_logos => 'Clearing KML and logos...';
+  String get lg_action_clearing_kml_logos => 'Inafuta KML na nembo...';
 
   @override
-  String get lg_action_relaunching => 'Relaunching LG...';
+  String get lg_action_relaunching => 'Inazindua upya LG...';
 
   @override
-  String get lg_action_rebooting => 'Rebooting LG...';
+  String get lg_action_rebooting => 'Inazindua upya mfumo wa LG...';
 
   @override
-  String get lg_action_powering_off => 'Powering off LG...';
+  String get lg_action_powering_off => 'Inazima LG...';
 
   @override
-  String get lg_action_success => 'Action completed successfully!';
+  String get lg_action_success => 'Kitendo kimekamilika kwa mafanikio!';
 
   @override
   String lg_action_failed(String error) {
-    return 'Action failed: $error';
+    return 'Kitendo kimeshindwa: $error';
   }
 
   @override
-  String get form_required => 'Required';
+  String get form_required => 'Inahitajika';
 
   @override
-  String get form_invalid_ip => 'Invalid IP';
+  String get form_invalid_ip => 'IP batili';
 
   @override
-  String get form_invalid_number => 'Invalid number';
+  String get form_invalid_number => 'Nambari batili';
 
   @override
-  String get qr_scan_title => 'Scan QR Code';
+  String get qr_scan_title => 'Changanua Msimbo wa QR';
 
   @override
-  String get qr_invalid_data => 'Invalid QR JSON data';
+  String get qr_invalid_data => 'Data ya JSON ya QR ni batili';
 
   @override
-  String get qr_scanned_success_title => 'QR Code Scanned Successfully';
+  String get qr_scanned_success_title =>
+      'Msimbo wa QR Umechunguzwa kwa Mafanikio';
 
   @override
-  String get qr_credentials_found => 'The following credentials were found:';
+  String get qr_credentials_found => 'Vyeti vifuatavyo vimepatikana:';
 
   @override
   String get qr_proceed_question =>
-      'Do you want to proceed with connecting to Liquid Galaxy using these credentials?';
+      'Je, unataka kuendelea kuunganisha kwenye Liquid Galaxy kwa kutumia vyeti hivi?';
 
   @override
-  String get qr_connect_button => 'Connect';
+  String get qr_connect_button => 'Unganisha';
 
   @override
   String get lg_connection_success =>
-      'Successfully connected to Liquid Galaxy! Logo displayed.';
+      'Imeunganishwa kwenye Liquid Galaxy kwa mafanikio! Nembo imeonyeshwa.';
 
   @override
   String lg_connection_failed(String error) {
-    return 'Connection failed: $error';
+    return 'Muunganisho umeshindwa: $error';
   }
 
   @override
-  String get viz_settings_title => 'Visualization Settings';
+  String get viz_settings_title => 'Mipangilio ya Miwani';
 
   @override
-  String get viz_confidence_threshold => 'Confidence Threshold';
+  String get viz_confidence_threshold => 'Kizingiti cha Uaminifu';
 
   @override
   String get viz_threshold_info =>
-      'Set the minimum confidence threshold for visualizing buildings retrieved from the API. Lower thresholds show more buildings, but may include less accurate results.';
+      'Weka kizingiti cha chini cha uaminifu kwa kuonyesha majengo yaliyopatikana kutoka kwenye API. Vizingiti vya chini vinaonyesha majengo zaidi, lakini vinaweza kujumuisha matokeo yasiyo sahihi.';
 
   @override
-  String get data_settings_title => 'Data Settings';
+  String get data_settings_title => 'Mipangilio ya Data';
 
   @override
-  String get data_source_version => 'Data Source Version';
+  String get data_source_version => 'Toleo la Chanzo cha Data';
 
   @override
-  String get data_visualization_mode => 'Visualization Mode (Hybrid/Dark)';
+  String get data_visualization_mode => 'Hali ya Miwani (Mchanganyiko/Giza)';
 
   @override
   String get data_version_v3_2025 => 'V3 (2025)';
 
   @override
-  String get about_title => 'About';
+  String get about_title => 'Kuhusu';
 
   @override
-  String get about_app_title => 'Open Buildings Dataset Tool';
+  String get about_app_title => 'Zana ya Daftari la Data ya Majengo ya Wazi';
 
   @override
   String get about_app_description =>
-      'Interactive visualization tool for Google\'s Open Buildings dataset\nwith Liquid Galaxy integration';
+      'Zana ya miwani ya maingiliano kwa daftari la data ya Majengo ya Wazi ya Google\nna uunganisho wa Liquid Galaxy';
 
   @override
-  String get about_version => 'Version';
+  String get about_version => 'Toleo';
 
   @override
   String get about_version_number => '1.0.0';
 
   @override
-  String get about_data_source => 'Data Source';
+  String get about_data_source => 'Chanzo cha Data';
 
   @override
-  String get about_data_source_value => 'Google Open Buildings V3';
+  String get about_data_source_value => 'Google Majengo ya Wazi V3';
 
   @override
-  String get about_project => 'Project';
+  String get about_project => 'Mradi';
 
   @override
   String get about_project_value => 'GSoC 2025 - Liquid Galaxy';
 
   @override
-  String get about_build_date => 'Build Date';
+  String get about_build_date => 'Tarehe ya Ujenzi';
 
   @override
-  String get about_build_date_value => 'January 2025';
+  String get about_build_date_value => 'Januari 2025';
 
   @override
-  String get about_developer => 'Developer';
+  String get about_developer => 'Msanidi';
 
   @override
   String get about_developer_name => 'Jaivardhan Shukla';
@@ -443,39 +449,42 @@ class AppLocalizationsSw extends AppLocalizations {
   String get about_linkedin => 'LinkedIn';
 
   @override
-  String get about_email => 'Email';
+  String get about_email => 'Barua pepe';
 
   @override
-  String get about_project_details => 'About this Project';
+  String get about_project_details => 'Kuhusu Mradi Huu';
 
   @override
   String get about_project_description =>
-      'This application integrates Google\'s Open Buildings dataset with interactive mapping capabilities and Liquid Galaxy visualization. Built as part of Google Summer of Code 2025 with the Liquid Galaxy organization.';
+      'Programu hii inaunganisha daftari la data ya Majengo ya Wazi ya Google na uwezo wa ramani ya maingiliano na miwani ya Liquid Galaxy. Imejengwa kama sehemu ya Google Summer of Code 2025 na shirika la Liquid Galaxy.';
 
   @override
-  String get about_key_features => 'Key Features:';
+  String get about_key_features => 'Vipengele Muhimu:';
 
   @override
-  String get about_feature_1 => 'Interactive building footprint visualization';
+  String get about_feature_1 => 'Miwani ya maingiliano ya alama za majengo';
 
   @override
-  String get about_feature_2 => 'Real-time data from Google Earth Engine';
+  String get about_feature_2 =>
+      'Data ya wakati halisi kutoka Google Earth Engine';
 
   @override
   String get about_feature_3 =>
-      'Liquid Galaxy integration for immersive experience';
+      'Uunganisho wa Liquid Galaxy kwa uzoefu wa kujitumbukiza';
 
   @override
-  String get about_feature_4 => 'Grid-based mapping with zoom controls';
+  String get about_feature_4 =>
+      'Ramani ya msingi wa gridi na vidhibiti vya zoom';
 
   @override
-  String get about_feature_5 => 'Building confidence score visualization';
+  String get about_feature_5 => 'Miwani ya alama za uaminifu wa majengo';
 
   @override
-  String get about_view_repository => 'View Project Repository';
+  String get about_view_repository => 'Ona Hifadhi ya Mradi';
 
   @override
-  String get about_open_buildings_dataset => 'Open Buildings Dataset';
+  String get about_open_buildings_dataset =>
+      'Daftari la Data ya Majengo ya Wazi';
 
   @override
   String get about_liquid_galaxy => 'Liquid Galaxy';
